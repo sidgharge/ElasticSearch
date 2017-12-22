@@ -1,6 +1,10 @@
 package com.bridgelabz.model;
 
-public class ServiceProvider {
+import java.io.Serializable;
+
+public class ServiceProvider implements Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private int spId;
 

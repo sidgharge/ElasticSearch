@@ -1,4 +1,4 @@
-package com.bridgelabz.utility;
+package com.bridgelabz.elastic.repository;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,70 +17,53 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.FuzzyQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
-import com.bridgelabz.model.Resident;
-import com.bridgelabz.model.ServiceProvider;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Component
-public class ElasticUtility {
+@Repository
+public class ElasticRepository {
 
 	@Autowired
 	RestHighLevelClient client;
+	
+	public String save(String json, String index, String type, String id) throws IOException {
 
-	public <T> String save(T object, String index, String type, String id) throws IOException {
-
-		ObjectMapper mapper = new ObjectMapper();
-
-		String json = mapper.writeValueAsString(object);
 		IndexRequest indexRequest = new IndexRequest(index, type, id);
 		indexRequest.source(json, XContentType.JSON);
 		IndexResponse indexResponse = client.index(indexRequest);
 
 		return indexResponse.getId();
 	}
-
-	public <T> T getById(String index, String type, String id, Class<T> className)
-			throws JsonParseException, JsonMappingException, IOException {
+	
+	public String getById(String index, String type, String id) throws IOException {
 		GetRequest getRequest = new GetRequest(index, type, id);
 		GetResponse response = client.get(getRequest);
-		ObjectMapper mapper = new ObjectMapper();
-
-		T object = mapper.readValue(response.getSourceAsString(), className);
-
-		return object;
+		
+		return response.getSourceAsString();
 	}
-
+	
 	public Result deleteById(String index, String type, String id) throws IOException {
 		DeleteRequest deleteRequest = new DeleteRequest(index, type, id);
 		DeleteResponse response = client.delete(deleteRequest);
 		return response.getResult();
 	}
-
-	public Result update(String index, String type, String id, Map<String, Object> dataMap) throws IOException {
-		ObjectMapper mapper = new ObjectMapper();
-
-		String json = mapper.writeValueAsString(dataMap);
+	
+	public Result update(String index, String type, String id, String json) throws IOException {
 		UpdateRequest updateRequest = new UpdateRequest(index, type, id);
 		updateRequest.doc(json, XContentType.JSON);
 		UpdateResponse response = client.update(updateRequest);
 		return response.getResult();
 	}
-
-	public <T> List<T> searchByIdAndText(String index, String type, Class<T> classType,
+	
+	public SearchHits searchByIdAndText(String index, String type, 
 			Map<String, Object> restrictions, String text, Map<String, Float> fields) throws IOException {
-		text = "*" + text + "*";
 
 		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 		QueryBuilder builder = boolQueryBuilder.must(QueryBuilders.queryStringQuery(text).lenient(true).fields(fields));
@@ -93,40 +76,7 @@ public class ElasticUtility {
 		SearchResponse searchResponse;
 		searchResponse = client.search(searchRequest);
 
-		List<T> results = new ArrayList<>();
-		ObjectMapper mapper = new ObjectMapper();
-		searchResponse.getHits().forEach(hit -> {
-			try {
-				results.add(mapper.readValue(hit.getSourceAsString(), classType));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
-		return results;
+		return searchResponse.getHits();
 
 	}
-
-	public <T> List<T> fuzzyNameSearch(String index, String type, String name, String value, Class<T> className)
-			throws IOException {
-		FuzzyQueryBuilder fuzzyBuilder = QueryBuilders.fuzzyQuery(name, value).fuzziness(Fuzziness.fromEdits(2));
-		SearchSourceBuilder builder = new SearchSourceBuilder();
-		builder.query(fuzzyBuilder);
-		SearchRequest request = new SearchRequest(index);
-		request.types(type);
-		request.source(builder);
-
-		SearchResponse response = client.search(request);
-
-		List<T> results = new ArrayList<>();
-		ObjectMapper mapper = new ObjectMapper();
-		response.getHits().forEach(hit -> {
-			try {
-				results.add(mapper.readValue(hit.getSourceAsString(), className));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
-		return results;
-	}
-
 }
