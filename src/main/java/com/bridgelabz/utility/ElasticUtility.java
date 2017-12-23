@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.action.DocWriteResponse.Result;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -17,21 +19,23 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.geo.GeoDistance;
+import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.FilteredQueryBuilder;
 import org.elasticsearch.index.query.FuzzyQueryBuilder;
+import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.bridgelabz.model.Resident;
-import com.bridgelabz.model.ServiceProvider;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -130,8 +134,8 @@ public class ElasticUtility {
 		});
 		return results;
 	}
-	
-	public <T> List<T> searchByText(String index, String type, Class<T> classType, String text) throws IOException{
+
+	public <T> List<T> searchByText(String index, String type, Class<T> classType, String text) throws IOException {
 		QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery(text);
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(builder);
@@ -148,14 +152,73 @@ public class ElasticUtility {
 		});
 		return results;
 	}
-	
-	public void filteredQuery(String index, String type, Class<T> classType, String text) {
-		FiltQuer
-		
+
+	public <T> List<T> filteredQuery(String index, String type, Class<T> classType, String name, String text)
+			throws IOException {
+		QueryBuilder builder = QueryBuilders.boolQuery().filter(QueryBuilders.matchQuery(name, text));
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(builder);
 		SearchRequest request = new SearchRequest(index).types(type).source(sourceBuilder);
 		SearchResponse response = client.search(request);
+		List<T> results = new ArrayList<>();
+		ObjectMapper mapper = new ObjectMapper();
+		response.getHits().forEach(hit -> {
+			try {
+				results.add(mapper.readValue(hit.getSourceAsString(), classType));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+		return results;
+	}
+
+	public <T> void bulkRequest(String index, String type, Class<T> classType, Map<String, T> objects)
+			throws IOException {
+
+		BulkRequest bulkRequest = new BulkRequest();
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		for (String id : objects.keySet()) {
+			String json = mapper.writeValueAsString(objects.get(id));
+			IndexRequest request = new IndexRequest(index, type, id);
+			request.source(json, XContentType.JSON);
+			bulkRequest.add(request);
+		}
+
+		/*
+		 * for (T t : objects.entrySet()) { String json = mapper.writeValueAsString(t);
+		 * IndexRequest request = new IndexRequest(index, type); request.source(json,
+		 * XContentType.JSON); bulkRequest.add(request); }
+		 */
+
+		BulkResponse response = client.bulk(bulkRequest);
+		System.out.println(response.getTook());
+	}
+
+	public <T> List<T> getNearByLocations(String index, String type, Class<T> classType, float lat, float lon,
+			String distance) throws IOException {
+
+		GeoDistanceQueryBuilder builder = QueryBuilders.geoDistanceQuery("location");
+		builder.point(lat, lon);
+		builder.distance(distance, DistanceUnit.METERS);
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+		sourceBuilder.query(builder);
+		SearchRequest request = new SearchRequest(index).types(type).source(sourceBuilder);
+		SearchResponse response = client.search(request);
+		List<T> results = new ArrayList<>();
+		ObjectMapper mapper = new ObjectMapper();
+		for (SearchHit hit : response.getHits()) {
+			results.add(mapper.readValue(hit.getSourceAsString(), classType));
+		}
+		/*response.getHits().forEach(hit -> {
+			try {
+				results.add(mapper.readValue(hit.getSourceAsString(), classType));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});*/
+		return results;
 	}
 
 }

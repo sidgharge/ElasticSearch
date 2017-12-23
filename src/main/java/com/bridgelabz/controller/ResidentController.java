@@ -145,4 +145,26 @@ public class ResidentController {
 		return null;
 	}
 
+	@GetMapping("/resident/filter/{name}/{text}")
+	public List<Resident> filteredSearch(@PathVariable String text, @PathVariable String name){
+		try {
+			return elasticUtility.filteredQuery("resident", "resident", Resident.class, name, text);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	@PostMapping("/sp/bulk")
+	public void bulkRequest(@RequestBody List<ServiceProvider> providers) {
+		try {
+			Map<String, ServiceProvider> dataMap = new HashMap<>();
+			for (ServiceProvider serviceProvider : providers) {
+				dataMap.put(String.valueOf(serviceProvider.getSpId()), serviceProvider);
+			}
+			elasticUtility.bulkRequest("provider", "provider", ServiceProvider.class, dataMap);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
