@@ -93,6 +93,7 @@ public class ElasticWithoutDataApplicationTests {
 	}
 	
 	@Test
+	@Ignore
 	public void searchByIdAndText() throws IOException {
 		Map<String, Object> restrictions = new HashMap<>();
 		restrictions.put("spId", 1);
@@ -109,6 +110,12 @@ public class ElasticWithoutDataApplicationTests {
 		Assert.assertEquals(2, residents.get(0).getResidentId());
 		
 		Assert.assertEquals(1, residents.get(1).getResidentId());
+	}
+	
+	@Test
+	public void searchByText() throws IOException {
+		List<Resident> residents = elasticUtility.searchByText("resident", "resident", Resident.class, "sa");
+		System.out.println(residents);
 	}
 
 }

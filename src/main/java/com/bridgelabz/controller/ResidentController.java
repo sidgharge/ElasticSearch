@@ -133,5 +133,16 @@ public class ResidentController {
 			return null;
 		}
 	}
+	
+	@GetMapping("/resident/text/{text}")
+	public List<Resident> search(@PathVariable String text){
+		try {
+			text = text + "*";
+			return elasticUtility.searchByText("resident", "resident", Resident.class, text);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 }

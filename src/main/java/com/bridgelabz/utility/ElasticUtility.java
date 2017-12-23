@@ -20,9 +20,11 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.FilteredQueryBuilder;
 import org.elasticsearch.index.query.FuzzyQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -127,6 +129,33 @@ public class ElasticUtility {
 			}
 		});
 		return results;
+	}
+	
+	public <T> List<T> searchByText(String index, String type, Class<T> classType, String text) throws IOException{
+		QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery(text);
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+		sourceBuilder.query(builder);
+		SearchRequest request = new SearchRequest(index).types(type).source(sourceBuilder);
+		SearchResponse response = client.search(request);
+		List<T> results = new ArrayList<>();
+		ObjectMapper mapper = new ObjectMapper();
+		response.getHits().forEach(hit -> {
+			try {
+				results.add(mapper.readValue(hit.getSourceAsString(), classType));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+		return results;
+	}
+	
+	public void filteredQuery(String index, String type, Class<T> classType, String text) {
+		FiltQuer
+		
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+		sourceBuilder.query(builder);
+		SearchRequest request = new SearchRequest(index).types(type).source(sourceBuilder);
+		SearchResponse response = client.search(request);
 	}
 
 }
