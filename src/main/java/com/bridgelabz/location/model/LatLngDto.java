@@ -1,4 +1,4 @@
-package com.bridgelabz.location.model;
+/*package com.bridgelabz.location.model;
 
 public class LatLngDto {
 
@@ -24,12 +24,13 @@ public class LatLngDto {
 		this.lon = lon;
 	}
 
-/*	public String getType() {
+	public String getType() {
 		return type;
 	}
 
 	public void setType(String type) {
 		this.type = type;
-	}*/
+	}
 
 }
+*/

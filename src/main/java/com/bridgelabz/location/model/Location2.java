@@ -1,4 +1,4 @@
-package com.bridgelabz.location.model;
+/*package com.bridgelabz.location.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -37,9 +37,9 @@ public class Location2 {
 
 	private float lng;
 
-	/*
+	
 	 * @Column(name = "unknown_col") private String unknownCol;
-	 */
+	 
 
 	public long getLocationId() {
 		return locationId;
@@ -85,9 +85,9 @@ public class Location2 {
 		return lng;
 	}
 
-	/*
+	
 	 * public String getUnknownCol() { return unknownCol; }
-	 */
+	 
 
 	public void setLocationId(long locationId) {
 		this.locationId = locationId;
@@ -133,12 +133,12 @@ public class Location2 {
 		this.lng = lng;
 	}
 
-	/*
+	
 	 * public void setUnknownCol(String unknownCol) { this.unknownCol = unknownCol;
 	 * }
-	 */
+	 
 
-	public void copy(Location location) {
+	public void copy(Loc location) {
 		this.locationId = location.getLocationId();
 		this.city = location.getCity();
 		this.location = location.getLocation();
@@ -151,4 +151,4 @@ public class Location2 {
 		this.lng = location.getLng();
 		this.unknownArea = location.getUnknownArea();
 	}
-}
+}*/

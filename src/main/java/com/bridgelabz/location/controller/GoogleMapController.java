@@ -16,7 +16,7 @@ import com.bridgelabz.location.service.GoogleMapService;
 @RestController
 public class GoogleMapController {
 
-	@Autowired
+	/*@Autowired
 	GoogleMapService service;
 
 	@RequestMapping(value = "/getdistance", method = RequestMethod.POST)
@@ -38,6 +38,6 @@ public class GoogleMapController {
 	public List<LocationDetails> getNearByPlaces(@RequestBody LatLng location) {
 
 		return service.getNearByPlaces(location);
-	}
+	}*/
 
 }

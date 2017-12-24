@@ -1,30 +1,34 @@
 package com.bridgelabz.location.model;
 
 public class LatLng {
-	
-	double lat;
-	
-	double lng;
+
+	float lat;
+
+	float lon;
 	
 	public LatLng() {
 		
 	}
-	public LatLng(double lat,double lng) {
-		this.lat=lat;
-		this.lng=lng;
+
+	public LatLng(float lat, float lng) {
+		this.lat = lat;
+		this.lon = lng;
 	}
-	
-	public double getLat() {
+
+	public float getLat() {
 		return lat;
 	}
-	public void setLat(double lat) {
+
+	public void setLat(float lat) {
 		this.lat = lat;
 	}
-	public double getLng() {
-		return lng;
+
+	public float getLon() {
+		return lon;
 	}
-	public void setLng(double lng) {
-		this.lng = lng;
+
+	public void setLon(float lon) {
+		this.lon = lon;
 	}
-	
+
 }

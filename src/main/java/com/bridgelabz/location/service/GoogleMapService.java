@@ -38,8 +38,8 @@ public class GoogleMapService {
 	 */
 	public Map<String, Integer> getDistance(LatLng source, LatLng destination) {
 
-		String origin = source.getLat() + "," + source.getLng();
-		String destinations = destination.getLat() + "," + destination.getLng();
+		String origin = source.getLat() + "," + source.getLon();
+		String destinations = destination.getLat() + "," + destination.getLon();
 
 		String mapApiUrl = "https://maps.googleapis.com/maps/api/distancematrix/json?" + "origins=" + origin
 				+ "&destinations=" + destinations + "&key=" + key;
@@ -76,7 +76,7 @@ public class GoogleMapService {
 	 */
 	public List<LocationDetails> getHousingComplexes(LatLng currentLocation) throws InterruptedException {
 
-		String location = currentLocation.getLat() + "," + currentLocation.getLng();
+		String location = currentLocation.getLat() + "," + currentLocation.getLon();
 
 		String mapApiUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + location
 				+ "&radius=400&keyword=Apartment|CHS&strictbounds&key=" + key;
@@ -118,8 +118,8 @@ public class GoogleMapService {
 			for (int i = 0; i < results.size(); i++) {
 				LocationDetails complex = new LocationDetails();
 
-				double lat = results.get(i).get("geometry").get("location").get("lat").asDouble();
-				double lng = results.get(i).get("geometry").get("location").get("lng").asDouble();
+				float lat = (float) results.get(i).get("geometry").get("location").get("lat").asDouble();
+				float lng = (float) results.get(i).get("geometry").get("location").get("lng").asDouble();
 
 				LatLng latlng = new LatLng(lat, lng);
 				complex.setName(results.get(i).get("name").asText());
@@ -148,7 +148,7 @@ public class GoogleMapService {
 	 */
 	public List<LocationDetails> getNearByPlaces(LatLng currentLocation) {
 
-		String location = currentLocation.getLat() + "," + currentLocation.getLng();
+		String location = currentLocation.getLat() + "," + currentLocation.getLon();
 
 		List<LocationDetails> nearByPlaces = new ArrayList<>();
 
@@ -180,8 +180,8 @@ public class GoogleMapService {
 			for (int i = 0; i < results.size(); i++) {
 				int flag = 0;
 
-				double lat = results.get(i).get("geometry").get("location").get("lat").asDouble();
-				double lng = results.get(i).get("geometry").get("location").get("lng").asDouble();
+				float lat = (float) results.get(i).get("geometry").get("location").get("lat").asDouble();
+				float lng = (float) results.get(i).get("geometry").get("location").get("lng").asDouble();
 
 				LatLng latlng = new LatLng(lat, lng);
 				LocationDetails place = new LocationDetails();

@@ -13,11 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bridgelabz.location.model.LatLng;
-import com.bridgelabz.location.model.Location;
-import com.bridgelabz.location.model.Location2;
+import com.bridgelabz.location.model.Loc;
 import com.bridgelabz.location.model.LocationDetails;
 import com.bridgelabz.location.model.LocationDto;
-import com.bridgelabz.location.repository.Location2Repository;
 import com.bridgelabz.location.repository.LocationRepository;
 import com.bridgelabz.location.service.GoogleMapService;
 import com.bridgelabz.utility.ElasticUtility;
@@ -31,8 +29,8 @@ public class LocationController {
 	@Autowired
 	ElasticUtility elasticUtility;
 
-	@Autowired
-	Location2Repository location2Repository;
+	/*@Autowired
+	Location2Repository location2Repository;*/
 
 	@Autowired
 	GoogleMapService service;
@@ -44,9 +42,9 @@ public class LocationController {
 	public void addFromDatabase() {
 		Map<String, LocationDto> locationMap = new HashMap<>();
 
-		Iterable<Location> locations = locationRepository.findAll();
+		Iterable<Loc> locations = locationRepository.findAll();
 		int count = 0;
-		for (Location location : locations) {
+		for (Loc location : locations) {
 			LocationDto dto = new LocationDto();
 			dto.copy(location);
 			locationMap.put(String.valueOf(dto.getLocationId()), dto);
@@ -73,7 +71,7 @@ public class LocationController {
 	 * @param distance
 	 * @return
 	 */
-	@RequestMapping("/nearby/{lat}/{lon}/{distance}")
+	@GetMapping("/nearby/{lat}/{lon}/{distance}")
 	public List<LocationDto> getNearBy(@PathVariable float lat, @PathVariable float lon,
 			@PathVariable String distance) {
 		try {
@@ -90,7 +88,7 @@ public class LocationController {
 	/**
 	 * create new table and adds unique entries to the table from old table
 	 */
-	public void deleteDuplicates() {
+	/*public void deleteDuplicates() {
 		Iterable<Location> locations = locationRepository.findAll();
 
 		List<Location> list = new LinkedList<>();
@@ -115,37 +113,37 @@ public class LocationController {
 
 		location2Repository.save(list2);
 
-	}
+	}*/
 
 	@GetMapping("/addPlaces")
 	public String addPlaces() throws IOException {
-		Iterable<Location> locations = locationRepository.findAll();
+		Iterable<Loc> locations = locationRepository.findAll();
 		int counter = 0;
 		int addedlocations = 0;
-		for (Location location : locations) {
-			/*if (counter < 40) {
+		for (Loc location : locations) {
+			if (counter < 10) {
 				counter++;
 				continue;
 			}
 			if (counter >= 49) {
 				break;
-			}*/
+			}
 
 			counter++;
-			List<LocationDetails> details = service.getNearByPlaces(new LatLng(location.getLat(), location.getLng()));
+			List<LocationDetails> details = service.getNearByPlaces(new LatLng(location.getLat(), location.getLon()));
 			System.out.println("Got details from map...");
 			for (LocationDetails locationDetails : details) {
 				List<LocationDto> dtos = elasticUtility.getNearByLocations("loc", "loc", LocationDto.class,
-						(float) locationDetails.getLocation().getLat(), (float) locationDetails.getLocation().getLng(),
+						(float) locationDetails.getLocation().getLat(), (float) locationDetails.getLocation().getLon(),
 						"1000");
 				System.out.println("Nearby location count: " + dtos);
 				if (dtos == null || dtos.isEmpty()) {
-					Location newLocation = new Location();
+					Loc newLocation = new Loc();
 					newLocation.copyFromLocationDetails(location, locationDetails);
 					newLocation = locationRepository.save(newLocation);
-					/*LocationDto locationDto = new LocationDto();
-					locationDto.copy(newLocation);*/
-					elasticUtility.save(newLocation, "loc", "loc", String.valueOf(newLocation.getLocationId()));
+					LocationDto locationDto = new LocationDto();
+					locationDto.copy(newLocation);
+					elasticUtility.save(locationDto, "loc", "loc", String.valueOf(locationDto.getLocationId()));
 					addedlocations++;
 				}
 			}

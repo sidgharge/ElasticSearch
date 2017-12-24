@@ -36,12 +36,13 @@ public class JmsConfig {
 		JmsTemplate template = new JmsTemplate();
 		template.setConnectionFactory(cachingConnectionFactory());
 		template.setDefaultDestination(queue());
+		//template.setMessageIdEnabled(true);
 		return template;
 	}
 	
 	@Bean
-	public ResidentListener residentListner() {
-		return new ResidentListener();
+	public <T> ResidentListener<T> residentListner() {
+		return new ResidentListener<T>();
 	}
 	
 	@Bean
