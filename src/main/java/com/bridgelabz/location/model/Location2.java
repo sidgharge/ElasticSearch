@@ -9,7 +9,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "locationMumbai3")
-public class Location {
+public class Location2 {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -138,26 +138,17 @@ public class Location {
 	 * }
 	 */
 
-	@Override
-	public boolean equals(Object obj) {
-		Location location = (Location) obj;
-		if ((location.getLat() == this.lat) && location.getLng() == this.lng) {
-			return true;
-		}
-		return false;
-	}
-	
-	public void copyFromLocationDetails(Location location, LocationDetails locationDetails) {
-		//this.locationId = location.getLocationId();
+	public void copy(Location location) {
+		this.locationId = location.getLocationId();
 		this.city = location.getCity();
-		this.location = locationDetails.getName();
+		this.location = location.getLocation();
 		this.country = location.getCountry();
-		//this.zip = location.getZip();
+		this.zip = location.getZip();
 		this.state = location.getState();
 		this.stateid = location.getStateid();
 		this.cityid = location.getCityid();
-		this.lat = (float)locationDetails.getLocation().getLat();
-		this.lng = (float)locationDetails.getLocation().getLng();
-		this.unknownArea = locationDetails.getAddress();
+		this.lat = location.getLat();
+		this.lng = location.getLng();
+		this.unknownArea = location.getUnknownArea();
 	}
 }
