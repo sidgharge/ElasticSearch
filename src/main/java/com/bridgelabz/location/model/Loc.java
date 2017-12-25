@@ -6,6 +6,10 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "locationMumbai3")
@@ -37,6 +41,30 @@ public class Loc {
 
 	@Column(name = "lng")
 	private float lon;
+
+	@Transient
+	private LatLng location;
+
+	/*@JsonCreator
+	public Loc(@JsonProperty("locationId") long locationId, @JsonProperty("country") String country,
+			@JsonProperty("zip") int zip, @JsonProperty("") String place, @JsonProperty("") String state,
+			@JsonProperty("") int stateid, @JsonProperty("") String city, @JsonProperty("") int cityid,
+			@JsonProperty("") String area, @JsonProperty("") float lat, @JsonProperty("") float lon,
+			@JsonProperty("") LatLng location) {
+		super();
+		this.locationId = locationId;
+		this.country = country;
+		this.zip = zip;
+		this.place = place;
+		this.state = state;
+		this.stateid = stateid;
+		this.city = city;
+		this.cityid = cityid;
+		this.area = area;
+		this.lat = lat;
+		this.lon = lon;
+		this.location = location;
+	}*/
 
 	public long getLocationId() {
 		return locationId;
@@ -124,6 +152,16 @@ public class Loc {
 
 	public void setLon(float lon) {
 		this.lon = lon;
+	}
+
+	public LatLng getLocation() {
+		return location;
+	}
+
+	public void setLocation(LatLng location) {
+		this.lat = location.getLat();
+		this.lon = location.getLon();
+		this.location = location;
 	}
 
 	@Override

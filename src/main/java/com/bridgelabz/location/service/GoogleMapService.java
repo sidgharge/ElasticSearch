@@ -159,7 +159,7 @@ public class GoogleMapService {
 		for (int radius = 500; radius <= 4000; radius += 1000) {
 
 			String mapApiUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + "location=" + location
-					+ "&radius=" + radius + "&types=sublocality&key=" + key;
+					+ "&radius=" + radius + "&types=sublocality_ level_2&key=" + key;
 
 			ResteasyWebTarget target = restCall.target(mapApiUrl);
 

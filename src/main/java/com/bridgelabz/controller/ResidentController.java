@@ -11,6 +11,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
+import org.dom4j.DocumentException;
 import org.elasticsearch.action.DocWriteResponse.Result;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -97,7 +98,7 @@ public class ResidentController {
 
 		try {
 			return elasticUtility.getById("resident", "resident", residentId, Resident.class);
-		} catch (IOException e) {
+		} catch (IOException | DocumentException e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -167,4 +168,6 @@ public class ResidentController {
 			e.printStackTrace();
 		}
 	}
+	
+	
 }

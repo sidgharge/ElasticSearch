@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.dom4j.DocumentException;
 import org.elasticsearch.action.DocWriteResponse.Result;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -58,14 +59,18 @@ public class ElasticUtility {
 	}
 
 	public <T> T getById(String index, String type, String id, Class<T> className)
-			throws JsonParseException, JsonMappingException, IOException {
+			throws JsonParseException, JsonMappingException, IOException, DocumentException {
 		GetRequest getRequest = new GetRequest(index, type, id);
 		GetResponse response = client.get(getRequest);
-		ObjectMapper mapper = new ObjectMapper();
+		if (response.isExists()) {
+			ObjectMapper mapper = new ObjectMapper();
 
-		T object = mapper.readValue(response.getSourceAsString(), className);
+			T object = mapper.readValue(response.getSourceAsString(), className);
 
-		return object;
+			return object;
+		}
+		
+		throw new DocumentException("Document does not exist");
 	}
 
 	public Result deleteById(String index, String type, String id) throws IOException {
@@ -211,14 +216,13 @@ public class ElasticUtility {
 		for (SearchHit hit : response.getHits()) {
 			results.add(mapper.readValue(hit.getSourceAsString(), classType));
 		}
-		/*response.getHits().forEach(hit -> {
-			try {
-				results.add(mapper.readValue(hit.getSourceAsString(), classType));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});*/
+		
 		return results;
 	}
+	
+	/*public void queryStringQuery(String index, String type, Class<T> classType, String text) {
+		
+		QueryStringQueryBuilder builder = new QueryStringQueryBuilder();
+	}*/
 
 }

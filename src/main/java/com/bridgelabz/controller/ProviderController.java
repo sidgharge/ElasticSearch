@@ -11,6 +11,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
+import org.dom4j.DocumentException;
 import org.elasticsearch.action.DocWriteResponse.Result;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -82,7 +83,7 @@ public class ProviderController {
 
 		try {
 			return elasticUtility.getById("provider", "provider", providerId, ServiceProvider.class);
-		} catch (IOException e) {
+		} catch (IOException | DocumentException e) {
 			e.printStackTrace();
 			return null;
 		}
