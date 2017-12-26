@@ -14,10 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bridgelabz.location.model.HousingComplex;
 import com.bridgelabz.location.model.LatLng;
 import com.bridgelabz.location.model.Location;
 import com.bridgelabz.location.model.LocationDetails;
 import com.bridgelabz.location.model.Location;
+import com.bridgelabz.location.repository.ComplexRepository;
 import com.bridgelabz.location.repository.LocationRepository;
 import com.bridgelabz.location.service.GoogleMapService;
 import com.bridgelabz.utility.ElasticUtility;
@@ -30,6 +32,9 @@ public class LocationController {
 
 	@Autowired
 	ElasticUtility elasticUtility;
+	
+	@Autowired
+	ComplexRepository complexRepository;
 
 	/*@Autowired
 	Location2Repository location2Repository;*/
@@ -121,16 +126,16 @@ public class LocationController {
 		int counter = 0;
 		int addedlocations = 0;
 		for (Location location : locations) {
-			if (counter < 30) {
+			if (counter < 10) {
 				counter++;
 				continue;
 			}
-			if (counter >= 50) {
+			if (counter >= 49) {
 				break;
 			}
 
 			counter++;
-			List<LocationDetails> details = service.getNearByPlaces(new LatLng(location.getLat(), location.getLng()));
+			List<LocationDetails> details = service.getNearByPlaces(location.getLatLng());
 			System.out.println("Got details from map...");
 			for (LocationDetails locationDetails : details) {
 				List<Location> nearByLocations = elasticUtility.getNearByLocations("loc", "loc", Location.class,
@@ -150,8 +155,35 @@ public class LocationController {
 		return "Got new location count: " + addedlocations;
 	}
 	
+	@GetMapping("/housingcomplex")
+	public void updateLocations() {
+		Iterable<Location> locations = locationRepository.findAll();
+		
+		for (Location location : locations) {
+			try {
+				List<LocationDetails> complexes = service.getHousingComplexes(location.getLatLng());
+				for (LocationDetails locationDetails : complexes) {
+					HousingComplex complex = new HousingComplex();
+					complex.setLocationId(location.getLocationId());
+					complex.setComplexName(locationDetails.getName());
+					complex.setLatLng(locationDetails.getLocation());
+					complex = complexRepository.save(complex);
+					elasticUtility.save(complex, "complex", "complex", String.valueOf(complex.getComplexId()));
+				}
+			} catch (InterruptedException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	@PostMapping("/test")
-	public void test(@RequestBody Location location) {
+	public void test(@RequestBody Location loc) {
+		LatLng latLng  = loc.getLatLng();
+		try {
+			service.getPlaceInfoFromLatLng(latLng.getLat(), latLng.getLon());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		System.out.println("Hello");
 	}
 }

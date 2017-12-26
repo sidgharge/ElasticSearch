@@ -1,9 +1,14 @@
 package com.bridgelabz.location.model;
 
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+
+@Embeddable
 public class LatLng {
 
 	private float lat;
 
+	@Column(name = "lng")
 	private float lon;
 
 	public LatLng(float lat, float lng) {

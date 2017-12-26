@@ -1,6 +1,7 @@
 package com.bridgelabz.location.model;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -38,18 +39,16 @@ public class Location {
 
 	private String area;
 
-	@JsonProperty(access = Access.WRITE_ONLY)
+	/*@JsonProperty(access = Access.WRITE_ONLY)
 	private float lat;
 
 	@JsonProperty(access = Access.WRITE_ONLY)
-	private float lng;
+	private float lng;*/
 
-	@Transient
-	private LatLng latLng = new LatLng();
+	//@Transient
+	@Embedded
+	private LatLng latLng; //= new LatLng();
 
-	public Location() {
-		System.out.println("Called");
-	}
 
 	public long getLocationId() {
 		return locationId;
@@ -123,39 +122,34 @@ public class Location {
 		this.area = area;
 	}
 
-	public float getLat() {
-		System.out.println("Getter called lat");
+	/*public float getLat() {
 		return lat;
 	}
 
 	public void setLat(float lat) {
 		this.lat = lat;
 		this.latLng.setLat(lat);
-		System.out.println("Setter called lat");
 	}
 
 	public float getLng() {
-		System.out.println("Getter called lng");
 		return lng;
 	}
 
 	public void setLng(float lng) {
 		this.lng = lng;
 		this.latLng.setLon(lng);
-		System.out.println("Setter called lat");
-	}
+	}*/
 
 	public LatLng getLatLng() {
-		System.out.println("Getter called latlon");
-		latLng.setLat(lat);
-		latLng.setLon(lng);
+		/*latLng.setLat(lat);
+		latLng.setLon(lng);*/
 		return latLng;
 	}
 
 
 	public void setLatLng(LatLng latLng) {
-		this.lat = latLng.getLat();
-		this.lng = latLng.getLon();
+		/*this.lat = latLng.getLat();
+		this.lng = latLng.getLon();*/
 		this.latLng = latLng;
 	}
 
@@ -174,8 +168,9 @@ public class Location {
 		this.state = location.getState();
 		this.stateid = location.getStateid();
 		this.cityid = location.getCityid();
-		this.lat = (float) locationDetails.getLocation().getLat();
-		this.lng = (float) locationDetails.getLocation().getLon();
+		/*this.lat = (float) locationDetails.getLocation().getLat();
+		this.lng = (float) locationDetails.getLocation().getLon();*/
+		this.latLng = locationDetails.getLocation();
 		this.area = locationDetails.getAddress();
 	}
 }

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import com.bridgelabz.location.model.LatLng;
 import com.bridgelabz.location.model.LocationDetails;
 import com.bridgelabz.location.util.Utility;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -159,7 +160,7 @@ public class GoogleMapService {
 		for (int radius = 500; radius <= 4000; radius += 1000) {
 
 			String mapApiUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + "location=" + location
-					+ "&radius=" + radius + "&types=sublocality_ level_2&key=" + key;
+					+ "&radius=" + radius + "&types=sublocality_level_1&key=" + key;
 
 			ResteasyWebTarget target = restCall.target(mapApiUrl);
 
@@ -204,4 +205,112 @@ public class GoogleMapService {
 		restCall.close();
 		return nearByPlaces;
 	}
+
+	public Map<String, Object> getPlaceInfo(String searchString) {
+
+		Map<String, Object> placeInfo = new HashMap<>();
+
+		ResteasyClient restCall = new ResteasyClientBuilder().build();
+
+		String[] words = searchString.split(" ");
+		searchString = "";
+
+		int i = 0;
+		while (i < words.length) {
+			searchString = words[i] + "+" + searchString;
+			i++;
+		}
+		String mapApiUrl = "https://maps.googleapis.com/maps/api/geocode/json?address=" + searchString + "&key=" + key;
+
+		ResteasyWebTarget target = restCall.target(mapApiUrl);
+
+		Response response = target.request().accept(MediaType.APPLICATION_JSON).get();
+
+		String responseString = response.readEntity(String.class);
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		JsonNode responseJson = null;
+
+		try {
+			responseJson = mapper.readTree(responseString);
+
+			JsonNode results = responseJson.get("results");
+
+			double lat = results.get(0).get("geometry").get("location").get("lat").asDouble();
+			double lng = results.get(0).get("geometry").get("location").get("lng").asDouble();
+			String location = lat + "," + lng;
+
+			String geoCodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?&types=postal_code&latlng="
+					+ location + "&keyword=" + words[0] + "&rankBy=keyword&key=" + key;
+
+			target = restCall.target(geoCodeUrl);
+
+			response = target.request().accept(MediaType.APPLICATION_JSON).get();
+
+			responseString = response.readEntity(String.class);
+
+			responseJson = mapper.readTree(responseString);
+
+			results = responseJson.get("results").get(0).get("address_components");
+			for (int j = 0; j < results.size(); j++) {
+				JsonNode types = results.get(j);
+				for (int index = 0; index < types.get("types").size(); index++) {
+					if (types.get("types").get(index).asText().equals("postal_code")) {
+						placeInfo.put("zipcode", types.get("long_name").asText());
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return placeInfo;
+
+	}
+
+	public void getPlaceInfoFromLatLng(float lat, float lng) throws JsonProcessingException, IOException {
+
+		ObjectMapper mapper = new ObjectMapper();
+		
+		ResteasyClient restCall = new ResteasyClientBuilder().build();
+		
+		Map<String, Object> placeInfo = new HashMap<>();
+
+		String geoCodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?&components=postal_code&latlng=" + lat + "," + lng
+				+ "&keyword=" + "&rankBy=keyword&key=" + key;
+		
+		JsonNode responseJson = null;
+		
+		ResteasyWebTarget target = restCall.target(geoCodeUrl);
+
+		Response response = target.request().accept(MediaType.APPLICATION_JSON).get();
+
+		String responseString = response.readEntity(String.class);
+;
+
+		target = restCall.target(geoCodeUrl);
+
+		response = target.request().accept(MediaType.APPLICATION_JSON).get();
+
+		responseString = response.readEntity(String.class);
+
+		responseJson = mapper.readTree(responseString);
+
+		JsonNode results = responseJson.get("results").get(0).get("address_components");
+		System.out.println(results.toString());
+		for (int j = 0; j < results.size(); j++) {
+			JsonNode types = results.get(j);
+			for (int index = 0; index < types.get("types").size(); index++) {
+				if (types.get("types").get(index).asText().equals("postal_code")) {
+					placeInfo.put("zipcode", types.get("long_name").asText());
+				}
+			}
+		}
+
+		//return placeInfo;
+
+	}
+
 }
