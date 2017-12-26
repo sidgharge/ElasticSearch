@@ -9,13 +9,15 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bridgelabz.location.model.LatLng;
-import com.bridgelabz.location.model.Loc;
+import com.bridgelabz.location.model.Location;
 import com.bridgelabz.location.model.LocationDetails;
-import com.bridgelabz.location.model.LocationDto;
+import com.bridgelabz.location.model.Location;
 import com.bridgelabz.location.repository.LocationRepository;
 import com.bridgelabz.location.service.GoogleMapService;
 import com.bridgelabz.utility.ElasticUtility;
@@ -40,14 +42,12 @@ public class LocationController {
 	 */
 	@RequestMapping("/addall")
 	public void addFromDatabase() {
-		Map<String, LocationDto> locationMap = new HashMap<>();
+		Map<String, Location> locationMap = new HashMap<>();
 
-		Iterable<Loc> locations = locationRepository.findAll();
+		Iterable<Location> locations = locationRepository.findAll();
 		int count = 0;
-		for (Loc location : locations) {
-			LocationDto dto = new LocationDto();
-			dto.copy(location);
-			locationMap.put(String.valueOf(dto.getLocationId()), dto);
+		for (Location location : locations) {
+			locationMap.put(String.valueOf(location.getLocationId()), location);
 			count++;
 			if (count % 10 == 0) {
 				System.out.println("Done: " + count);
@@ -56,7 +56,7 @@ public class LocationController {
 
 		try {
 			System.out.println("Size: " + locationMap.size());
-			elasticUtility.bulkRequest("loc", "loc", LocationDto.class, locationMap);
+			elasticUtility.bulkRequest("loc", "loc", Location.class, locationMap);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("ERRR.....");
@@ -72,10 +72,10 @@ public class LocationController {
 	 * @return
 	 */
 	@GetMapping("/nearby/{lat}/{lon}/{distance}")
-	public List<LocationDto> getNearBy(@PathVariable float lat, @PathVariable float lon,
+	public List<Location> getNearBy(@PathVariable float lat, @PathVariable float lon,
 			@PathVariable String distance) {
 		try {
-			List<LocationDto> locations = elasticUtility.getNearByLocations("loc", "loc", LocationDto.class, lat, lon,
+			List<Location> locations = elasticUtility.getNearByLocations("loc", "loc", Location.class, lat, lon,
 					distance);
 			return locations;
 		} catch (IOException e) {
@@ -117,10 +117,10 @@ public class LocationController {
 
 	@GetMapping("/addPlaces")
 	public String addPlaces() throws IOException {
-		Iterable<Loc> locations = locationRepository.findAll();
+		Iterable<Location> locations = locationRepository.findAll();
 		int counter = 0;
 		int addedlocations = 0;
-		for (Loc location : locations) {
+		for (Location location : locations) {
 			if (counter < 30) {
 				counter++;
 				continue;
@@ -130,25 +130,28 @@ public class LocationController {
 			}
 
 			counter++;
-			List<LocationDetails> details = service.getNearByPlaces(new LatLng(location.getLat(), location.getLon()));
+			List<LocationDetails> details = service.getNearByPlaces(new LatLng(location.getLat(), location.getLng()));
 			System.out.println("Got details from map...");
 			for (LocationDetails locationDetails : details) {
-				List<LocationDto> dtos = elasticUtility.getNearByLocations("loc", "loc", LocationDto.class,
+				List<Location> nearByLocations = elasticUtility.getNearByLocations("loc", "loc", Location.class,
 						(float) locationDetails.getLocation().getLat(), (float) locationDetails.getLocation().getLon(),
 						"1000");
-				System.out.println("Nearby location count: " + dtos);
-				if (dtos == null || dtos.isEmpty()) {
-					Loc newLocation = new Loc();
+				System.out.println("Nearby location count: " + nearByLocations);
+				if (nearByLocations == null || nearByLocations.isEmpty()) {
+					Location newLocation = new Location();
 					newLocation.copyFromLocationDetails(location, locationDetails);
 					newLocation = locationRepository.save(newLocation);
-					LocationDto locationDto = new LocationDto();
-					locationDto.copy(newLocation);
-					elasticUtility.save(locationDto, "loc", "loc", String.valueOf(locationDto.getLocationId()));
+					elasticUtility.save(newLocation, "loc", "loc", String.valueOf(newLocation.getLocationId()));
 					addedlocations++;
 				}
 			}
 			System.out.println("Done: " + counter);
 		}
 		return "Got new location count: " + addedlocations;
+	}
+	
+	@PostMapping("/test")
+	public void test(@RequestBody Location location) {
+		System.out.println("Hello");
 	}
 }

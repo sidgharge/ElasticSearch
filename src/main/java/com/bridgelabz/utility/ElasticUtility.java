@@ -204,7 +204,7 @@ public class ElasticUtility {
 	public <T> List<T> getNearByLocations(String index, String type, Class<T> classType, float lat, float lon,
 			String distance) throws IOException {
 
-		GeoDistanceQueryBuilder builder = QueryBuilders.geoDistanceQuery("location");
+		GeoDistanceQueryBuilder builder = QueryBuilders.geoDistanceQuery("latLng");
 		builder.point(lat, lon);
 		builder.distance(distance, DistanceUnit.METERS);
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();

@@ -10,10 +10,11 @@ import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
 @Entity
 @Table(name = "locationMumbai3")
-public class Loc {
+public class Location {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -37,14 +38,18 @@ public class Loc {
 
 	private String area;
 
+	@JsonProperty(access = Access.WRITE_ONLY)
 	private float lat;
 
-	@Column(name = "lng")
-	private float lon;
+	@JsonProperty(access = Access.WRITE_ONLY)
+	private float lng;
 
 	@Transient
-	private LatLng location;
+	private LatLng latLng = new LatLng();
 
+	public Location() {
+		System.out.println("Called");
+	}
 
 	public long getLocationId() {
 		return locationId;
@@ -119,41 +124,48 @@ public class Loc {
 	}
 
 	public float getLat() {
+		System.out.println("Getter called lat");
 		return lat;
 	}
 
 	public void setLat(float lat) {
 		this.lat = lat;
+		this.latLng.setLat(lat);
+		System.out.println("Setter called lat");
 	}
 
-	public float getLon() {
-		return lon;
+	public float getLng() {
+		System.out.println("Getter called lng");
+		return lng;
 	}
 
-	public void setLon(float lon) {
-		this.lon = lon;
+	public void setLng(float lng) {
+		this.lng = lng;
+		this.latLng.setLon(lng);
+		System.out.println("Setter called lat");
 	}
 
-	public LatLng getLocation() {
-		return location;
+	public LatLng getLatLng() {
+		System.out.println("Getter called latlon");
+		latLng.setLat(lat);
+		latLng.setLon(lng);
+		return latLng;
 	}
 
-	public void setLocation(LatLng location) {
-		this.lat = location.getLat();
-		this.lon = location.getLon();
-		this.location = location;
+
+	public void setLatLng(LatLng latLng) {
+		this.lat = latLng.getLat();
+		this.lng = latLng.getLon();
+		this.latLng = latLng;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		Loc location = (Loc) obj;
-		if ((location.getLat() == this.lat) && location.getLon() == this.lon) {
-			return true;
-		}
-		return false;
-	}
+	/*
+	 * @Override public boolean equals(Object obj) { Location location = (Location)
+	 * obj; if ((location.getLat() == this.lat) && latLng.getLon() == this.lng) {
+	 * return true; } return false; }
+	 */
 
-	public void copyFromLocationDetails(Loc location, LocationDetails locationDetails) {
+	public void copyFromLocationDetails(Location location, LocationDetails locationDetails) {
 		// this.locationId = location.getLocationId();
 		this.city = location.getCity();
 		this.place = locationDetails.getName();
@@ -163,7 +175,7 @@ public class Loc {
 		this.stateid = location.getStateid();
 		this.cityid = location.getCityid();
 		this.lat = (float) locationDetails.getLocation().getLat();
-		this.lon = (float) locationDetails.getLocation().getLon();
+		this.lng = (float) locationDetails.getLocation().getLon();
 		this.area = locationDetails.getAddress();
 	}
 }

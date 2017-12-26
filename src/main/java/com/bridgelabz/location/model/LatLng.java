@@ -2,17 +2,17 @@ package com.bridgelabz.location.model;
 
 public class LatLng {
 
-	float lat;
+	private float lat;
 
-	float lon;
-	
-	public LatLng() {
-		
-	}
+	private float lon;
 
 	public LatLng(float lat, float lng) {
 		this.lat = lat;
 		this.lon = lng;
+	}
+
+	public LatLng() {
+
 	}
 
 	public float getLat() {
