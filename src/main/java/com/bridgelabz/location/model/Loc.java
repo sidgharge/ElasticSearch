@@ -45,26 +45,6 @@ public class Loc {
 	@Transient
 	private LatLng location;
 
-	/*@JsonCreator
-	public Loc(@JsonProperty("locationId") long locationId, @JsonProperty("country") String country,
-			@JsonProperty("zip") int zip, @JsonProperty("") String place, @JsonProperty("") String state,
-			@JsonProperty("") int stateid, @JsonProperty("") String city, @JsonProperty("") int cityid,
-			@JsonProperty("") String area, @JsonProperty("") float lat, @JsonProperty("") float lon,
-			@JsonProperty("") LatLng location) {
-		super();
-		this.locationId = locationId;
-		this.country = country;
-		this.zip = zip;
-		this.place = place;
-		this.state = state;
-		this.stateid = stateid;
-		this.city = city;
-		this.cityid = cityid;
-		this.area = area;
-		this.lat = lat;
-		this.lon = lon;
-		this.location = location;
-	}*/
 
 	public long getLocationId() {
 		return locationId;
