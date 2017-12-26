@@ -2,6 +2,7 @@ package com.bridgelabz.utility;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +33,13 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.bridgelabz.model.Resident;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -91,7 +96,7 @@ public class ElasticUtility {
 
 	public <T> List<T> searchByIdAndText(String index, String type, Class<T> classType,
 			Map<String, Object> restrictions, String text, Map<String, Float> fields) throws IOException {
-		text = "*" + text + "*";
+		//text = "*" + text + "*";
 
 		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 		QueryBuilder builder = boolQueryBuilder.must(QueryBuilders.queryStringQuery(text).lenient(true).fields(fields));
@@ -209,6 +214,8 @@ public class ElasticUtility {
 		builder.distance(distance, DistanceUnit.METERS);
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(builder);
+		SortBuilder<GeoDistanceSortBuilder> sort = SortBuilders.geoDistanceSort("latLng", lat, lon);
+		sourceBuilder.sort(sort);
 		SearchRequest request = new SearchRequest(index).types(type).source(sourceBuilder);
 		SearchResponse response = client.search(request);
 		List<T> results = new ArrayList<>();
@@ -220,9 +227,37 @@ public class ElasticUtility {
 		return results;
 	}
 	
-	/*public void queryStringQuery(String index, String type, Class<T> classType, String text) {
+	public <T> List<T> queryStringQuery(String index, String type, Class<T> classType, String text) throws IOException {
 		
-		QueryStringQueryBuilder builder = new QueryStringQueryBuilder();
-	}*/
+		QueryStringQueryBuilder builder = new QueryStringQueryBuilder(text);
+		
+		SearchRequest request = new SearchRequest(index);
+		request.types(type);
+		request.source(new SearchSourceBuilder().query(builder));
+		SearchResponse response = client.search(request);
+		List<T> results = new LinkedList<>();
+		ObjectMapper mapper = new ObjectMapper();
+		for (SearchHit hit : response.getHits()) {
+			results.add(mapper.readValue(hit.getSourceAsString(), classType));
+		}
+		
+		return results;
+	}
+	
+	public <T> List<T> getByValue(String index, String type, Class<T> classType, String name, Object text) throws IOException {
+		QueryBuilder query = QueryBuilders.matchQuery(name, text);
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+		sourceBuilder.query(query);
+		SearchRequest request = new SearchRequest(index);
+		request.types(type);
+		request.source(sourceBuilder);
+		SearchResponse response = client.search(request);
+		ObjectMapper mapper = new ObjectMapper();
+		List<T> results = new LinkedList<>();
+		for (SearchHit hit : response.getHits()) {
+			results.add(mapper.readValue(hit.getSourceAsString(), classType));
+		}
+		return results;
+	}
 
 }

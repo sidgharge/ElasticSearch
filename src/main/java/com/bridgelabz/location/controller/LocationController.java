@@ -156,7 +156,7 @@ public class LocationController {
 	}
 	
 	@GetMapping("/housingcomplex")
-	public void updateLocations() {
+	public void addHousingComplexes() {
 		Iterable<Location> locations = locationRepository.findAll();
 		
 		for (Location location : locations) {
@@ -176,6 +176,29 @@ public class LocationController {
 		}
 	}
 	
+	@GetMapping("/update")
+	public void updateLocations() {
+		Iterable<Location> locations = locationRepository.findAll();
+		int counter = 0;
+		for (Location location : locations) {
+			try {
+				counter++;
+				Map<String, String> locationInfo = service.getPlaceInfoFromLatLng(location.getLatLng().getLat(), location.getLatLng().getLon());
+				if (counter < 48) {
+					if (locationInfo.get("area") != null) {
+						location.setArea(locationInfo.get("area"));
+					}
+				} else {
+					location.setZip(Integer.parseInt(locationInfo.get("zipcode")));
+				}
+				locationRepository.save(location);
+				elasticUtility.save(location, "loc", "loc", String.valueOf(location.getLocationId()));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	@PostMapping("/test")
 	public void test(@RequestBody Location loc) {
 		LatLng latLng  = loc.getLatLng();
@@ -185,5 +208,15 @@ public class LocationController {
 			e.printStackTrace();
 		}
 		System.out.println("Hello");
+	}
+	
+	@GetMapping("/complex/{locationId}")
+	public List<HousingComplex> getHousingComplexes(@PathVariable String locationId) {
+		try {
+			return elasticUtility.getByValue("complex", "complex", HousingComplex.class, "locationId", locationId);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

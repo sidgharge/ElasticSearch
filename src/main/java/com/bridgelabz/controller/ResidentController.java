@@ -139,7 +139,8 @@ public class ResidentController {
 	public List<Resident> search(@PathVariable String text){
 		try {
 			text = text + "*";
-			return elasticUtility.searchByText("resident", "resident", Resident.class, text);
+			//return elasticUtility.searchByText("resident", "resident", Resident.class, text);
+			return elasticUtility.queryStringQuery("resident", "resident", Resident.class, text);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

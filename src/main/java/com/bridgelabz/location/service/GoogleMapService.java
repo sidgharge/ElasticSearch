@@ -239,6 +239,7 @@ public class GoogleMapService {
 
 			double lat = results.get(0).get("geometry").get("location").get("lat").asDouble();
 			double lng = results.get(0).get("geometry").get("location").get("lng").asDouble();
+
 			String location = lat + "," + lng;
 
 			String geoCodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?&types=postal_code&latlng="
@@ -251,13 +252,39 @@ public class GoogleMapService {
 			responseString = response.readEntity(String.class);
 
 			responseJson = mapper.readTree(responseString);
+			
+			int flag = 0;
+			for (int k = 0; k <= responseJson.get("results").size(); k++) {
 
-			results = responseJson.get("results").get(0).get("address_components");
+				results = responseJson.get("results").get(k);
+
+				for (int index = 0; index < results.get("types").size(); index++) {
+					if (results.get("types").get(index).asText().equals("postal_code")) {
+						flag = 1;
+						break;
+					}
+				}
+				if (flag == 1) {
+					break;
+				}
+			}
 			for (int j = 0; j < results.size(); j++) {
-				JsonNode types = results.get(j);
-				for (int index = 0; index < types.get("types").size(); index++) {
-					if (types.get("types").get(index).asText().equals("postal_code")) {
-						placeInfo.put("zipcode", types.get("long_name").asText());
+
+				JsonNode types = results.get("address_components");
+				
+				for (int index = 0; index < types.get(j).get("types").size(); index++) {
+					JsonNode record=types.get(j).get("types").get(index);
+					if (types.get(j).get("types").get(index).asText().equals("postal_code")) {
+						placeInfo.put("zipcode", types.get(j).get("long_name").asText());
+						
+					} else if (types.get(j).get("types").get(index).asText().equals("sublocality_level_1")) {
+						placeInfo.put("sublocality_level_1", types.get(j).get("long_name").asText());
+						
+					} else if (types.get(j).get("types").get(index).asText().equals("locality")) {
+						placeInfo.put("locality", types.get(j).get("long_name").asText());
+						
+					} else if (types.get(j).get("types").get(index).asText().equals("country")) {
+						placeInfo.put("country", types.get(j).get("long_name").asText());
 					}
 				}
 			}
@@ -270,13 +297,13 @@ public class GoogleMapService {
 
 	}
 
-	public void getPlaceInfoFromLatLng(float lat, float lng) throws JsonProcessingException, IOException {
+	public Map<String, String> getPlaceInfoFromLatLng(float lat, float lng) throws JsonProcessingException, IOException {
 
 		ObjectMapper mapper = new ObjectMapper();
 		
 		ResteasyClient restCall = new ResteasyClientBuilder().build();
 		
-		Map<String, Object> placeInfo = new HashMap<>();
+		Map<String, String> placeInfo = new HashMap<>();
 
 		String geoCodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?&components=postal_code&latlng=" + lat + "," + lng
 				+ "&keyword=" + "&rankBy=keyword&key=" + key;
@@ -288,7 +315,6 @@ public class GoogleMapService {
 		Response response = target.request().accept(MediaType.APPLICATION_JSON).get();
 
 		String responseString = response.readEntity(String.class);
-;
 
 		target = restCall.target(geoCodeUrl);
 
@@ -297,19 +323,52 @@ public class GoogleMapService {
 		responseString = response.readEntity(String.class);
 
 		responseJson = mapper.readTree(responseString);
-
-		JsonNode results = responseJson.get("results").get(0).get("address_components");
+	
+		JsonNode results = responseJson.get("results");
 		System.out.println(results.toString());
-		for (int j = 0; j < results.size(); j++) {
-			JsonNode types = results.get(j);
-			for (int index = 0; index < types.get("types").size(); index++) {
-				if (types.get("types").get(index).asText().equals("postal_code")) {
-					placeInfo.put("zipcode", types.get("long_name").asText());
+		int flag = 0;
+		for (int k = 0; k < responseJson.get("results").size(); k++) {
+
+			results = responseJson.get("results").get(k);
+
+			for (int index = 0; index < results.get("types").size(); index++) {
+				if (results.get("types").get(index).asText().equals("postal_code")) {
+					flag = 1;
+					break;
 				}
 			}
+			if (flag == 1) {
+				break;
+			}
 		}
+		JsonNode types = results.get("address_components");
+		for (int j = 0; j < types.size(); j++) {
+			
+			
+			
+	
+			for (int index = 0; index < types.get(j).get("types").size()&&j<types.size(); index++) {
+				
+				//JsonNode record=types.get(j).get("types").get(index);
+				if (types.get(j).get("types").get(index).asText().equals("postal_code")) {
+					placeInfo.put("zipcode", types.get(j).get("long_name").asText());
+					
+				} else if (types.get(j).get("types").get(index).asText().equals("sublocality_level_1")) {
+					placeInfo.put("sublocality_level_1", types.get(j).get("long_name").asText());
+					
+				} else if (types.get(j).get("types").get(index).asText().equals("locality")) {
+					placeInfo.put("locality", types.get(j).get("long_name").asText());
+					
+				} else if (types.get(j).get("types").get(index).asText().equals("country")) {
+					placeInfo.put("country", types.get(j).get("long_name").asText());
+				}
+				
+			}
+			
+		}
+	return placeInfo;
 
-		//return placeInfo;
+		
 
 	}
 
