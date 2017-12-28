@@ -128,7 +128,7 @@ public class ProviderController {
 		fields.put("altMob", 2.5f);
 
 		try {
-			List<Resident> residents = elasticUtility.searchByIdAndText("resident", "resident", Resident.class,
+			List<Resident> residents = elasticUtility.searchOnFieldsWithRestrictions("resident", "resident", Resident.class,
 					restrictions, text, fields);
 			return residents;
 		} catch (IOException e) {

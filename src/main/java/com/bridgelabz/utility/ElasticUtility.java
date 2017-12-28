@@ -94,7 +94,7 @@ public class ElasticUtility {
 		return response.getResult();
 	}
 
-	public <T> List<T> searchByIdAndText(String index, String type, Class<T> classType,
+	public <T> List<T> searchOnFieldsWithRestrictions(String index, String type, Class<T> classType,
 			Map<String, Object> restrictions, String text, Map<String, Float> fields) throws IOException {
 		//text = "*" + text + "*";
 
@@ -111,13 +111,17 @@ public class ElasticUtility {
 
 		List<T> results = new ArrayList<>();
 		ObjectMapper mapper = new ObjectMapper();
-		searchResponse.getHits().forEach(hit -> {
+		/*searchResponse.getHits().forEach(hit -> {
 			try {
 				results.add(mapper.readValue(hit.getSourceAsString(), classType));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		});
+		});*/
+		
+		for (SearchHit hit : searchResponse.getHits()) {
+			results.add(mapper.readValue(hit.getSourceAsString(), classType));
+		}
 		return results;
 
 	}
@@ -145,7 +149,7 @@ public class ElasticUtility {
 		return results;
 	}
 
-	public <T> List<T> searchByText(String index, String type, Class<T> classType, String text) throws IOException {
+	public <T> List<T> searchOnFields(String index, String type, Class<T> classType, String text) throws IOException {
 		QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery(text);
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(builder);
@@ -244,16 +248,18 @@ public class ElasticUtility {
 		return results;
 	}
 	
-	public <T> List<T> getByValue(String index, String type, Class<T> classType, String name, Object text) throws IOException {
-		QueryBuilder query = QueryBuilders.matchQuery(name, text);
+	public <T> List<T> searchByTermAndValue(String index, String type, Class<T> classType, String field, Object text, int from) throws IOException {
+		QueryBuilder query = QueryBuilders.matchQuery(field, text);
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(query);
+		sourceBuilder.size(5);
+		sourceBuilder.from(from);
 		SearchRequest request = new SearchRequest(index);
 		request.types(type);
 		request.source(sourceBuilder);
 		SearchResponse response = client.search(request);
 		ObjectMapper mapper = new ObjectMapper();
-		List<T> results = new LinkedList<>();
+		List<T> results = new ArrayList<>();
 		for (SearchHit hit : response.getHits()) {
 			results.add(mapper.readValue(hit.getSourceAsString(), classType));
 		}

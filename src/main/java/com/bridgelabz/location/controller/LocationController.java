@@ -1,12 +1,14 @@
 package com.bridgelabz.location.controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,12 +34,13 @@ public class LocationController {
 
 	@Autowired
 	ElasticUtility elasticUtility;
-	
+
 	@Autowired
 	ComplexRepository complexRepository;
 
-	/*@Autowired
-	Location2Repository location2Repository;*/
+	/*
+	 * @Autowired Location2Repository location2Repository;
+	 */
 
 	@Autowired
 	GoogleMapService service;
@@ -77,8 +80,7 @@ public class LocationController {
 	 * @return
 	 */
 	@GetMapping("/nearby/{lat}/{lon}/{distance}")
-	public List<Location> getNearBy(@PathVariable float lat, @PathVariable float lon,
-			@PathVariable String distance) {
+	public List<Location> getNearBy(@PathVariable float lat, @PathVariable float lon, @PathVariable String distance) {
 		try {
 			List<Location> locations = elasticUtility.getNearByLocations("loc", "loc", Location.class, lat, lon,
 					distance);
@@ -93,32 +95,23 @@ public class LocationController {
 	/**
 	 * create new table and adds unique entries to the table from old table
 	 */
-	/*public void deleteDuplicates() {
-		Iterable<Location> locations = locationRepository.findAll();
-
-		List<Location> list = new LinkedList<>();
-		locations.forEach(list::add);
-
-		List<Location2> list2 = new LinkedList<>();
-
-		for (int i = 0; i < list.size(); i++) {
-			boolean add = true;
-			for (int j = i + 1; j < list.size(); j++) {
-				if (list.get(i).equals(list.get(j))) {
-					add = false;
-					break;
-				}
-			}
-			if (add) {
-				Location2 loc = new Location2();
-				loc.copy(list.get(i));
-				list2.add(loc);
-			}
-		}
-
-		location2Repository.save(list2);
-
-	}*/
+	/*
+	 * public void deleteDuplicates() { Iterable<Location> locations =
+	 * locationRepository.findAll();
+	 * 
+	 * List<Location> list = new LinkedList<>(); locations.forEach(list::add);
+	 * 
+	 * List<Location2> list2 = new LinkedList<>();
+	 * 
+	 * for (int i = 0; i < list.size(); i++) { boolean add = true; for (int j = i +
+	 * 1; j < list.size(); j++) { if (list.get(i).equals(list.get(j))) { add =
+	 * false; break; } } if (add) { Location2 loc = new Location2();
+	 * loc.copy(list.get(i)); list2.add(loc); } }
+	 * 
+	 * location2Repository.save(list2);
+	 * 
+	 * }
+	 */
 
 	@GetMapping("/addPlaces")
 	public String addPlaces() throws IOException {
@@ -126,11 +119,11 @@ public class LocationController {
 		int counter = 0;
 		int addedlocations = 0;
 		for (Location location : locations) {
-			if (counter < 10) {
+			if (counter < 70) {
 				counter++;
 				continue;
 			}
-			if (counter >= 49) {
+			if (counter >= 80) {
 				break;
 			}
 
@@ -141,7 +134,7 @@ public class LocationController {
 				List<Location> nearByLocations = elasticUtility.getNearByLocations("loc", "loc", Location.class,
 						(float) locationDetails.getLocation().getLat(), (float) locationDetails.getLocation().getLon(),
 						"1000");
-				System.out.println("Nearby location count: " + nearByLocations);
+				System.out.println("Nearby location count: " + nearByLocations.size());
 				if (nearByLocations == null || nearByLocations.isEmpty()) {
 					Location newLocation = new Location();
 					newLocation.copyFromLocationDetails(location, locationDetails);
@@ -154,11 +147,11 @@ public class LocationController {
 		}
 		return "Got new location count: " + addedlocations;
 	}
-	
+
 	@GetMapping("/housingcomplex")
 	public void addHousingComplexes() {
 		Iterable<Location> locations = locationRepository.findAll();
-		
+
 		for (Location location : locations) {
 			try {
 				List<LocationDetails> complexes = service.getHousingComplexes(location.getLatLng());
@@ -175,33 +168,62 @@ public class LocationController {
 			}
 		}
 	}
-	
+
 	@GetMapping("/update")
 	public void updateLocations() {
 		Iterable<Location> locations = locationRepository.findAll();
 		int counter = 0;
+		int changedPos = 0;
 		for (Location location : locations) {
 			try {
 				counter++;
-				Map<String, String> locationInfo = service.getPlaceInfoFromLatLng(location.getLatLng().getLat(), location.getLatLng().getLon());
-				if (counter < 48) {
-					if (locationInfo.get("area") != null) {
-						location.setArea(locationInfo.get("area"));
-					}
-				} else {
-					location.setZip(Integer.parseInt(locationInfo.get("zipcode")));
+				if (counter % 10 == 0) {
+					System.out.println(counter);
 				}
-				locationRepository.save(location);
-				elasticUtility.save(location, "loc", "loc", String.valueOf(location.getLocationId()));
+				/*
+				 * Map<String, String> locationInfo =
+				 * service.getPlaceInfoFromLatLng(location.getLatLng().getLat(),
+				 * location.getLatLng().getLon());
+				 */
+				
+				if (counter < 86 && counter > 47) {
+					Map<String, String> locationInfo = service.getSublocalityDetails(location.getLatLng().getLat(),
+							location.getLatLng().getLon());
+					boolean isChanged = false;
+					if (locationInfo.get("zipcode") != null
+							&& !locationInfo.get("zipcode").equals(String.valueOf(location.getZip()))) {
+						
+						location.setZip(Integer.parseInt(locationInfo.get("zipcode")));
+						isChanged = true;
+					}
+					if (locationInfo.get("sublocality_level_1") != null
+							&& !locationInfo.get("sublocality_level_1").equals(location.getArea())) {
+						location.setArea(locationInfo.get("sublocality_level_1"));
+						isChanged = true;
+					}
+					if (locationInfo.get("Level2") != null && !locationInfo.get("Level2").equals(location.getPlace())) {
+						location.setPlace(locationInfo.get("Level2"));
+						isChanged = true;
+					}
+					if (isChanged) {
+						changedPos++;
+						locationRepository.save(location);
+						elasticUtility.save(location, "loc", "loc", String.valueOf(location.getLocationId()));
+
+					}
+
+				}
+
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		System.out.println("Changed count: " + changedPos);
 	}
-	
+
 	@PostMapping("/test")
 	public void test(@RequestBody Location loc) {
-		LatLng latLng  = loc.getLatLng();
+		LatLng latLng = loc.getLatLng();
 		try {
 			service.getPlaceInfoFromLatLng(latLng.getLat(), latLng.getLon());
 		} catch (IOException e) {
@@ -209,14 +231,27 @@ public class LocationController {
 		}
 		System.out.println("Hello");
 	}
-	
-	@GetMapping("/complex/{locationId}")
-	public List<HousingComplex> getHousingComplexes(@PathVariable String locationId) {
+
+	@GetMapping("/complex/{locationId}/{page}")
+	public List<HousingComplex> getHousingComplexes(@PathVariable String locationId, @PathVariable int page) {
 		try {
-			return elasticUtility.getByValue("complex", "complex", HousingComplex.class, "locationId", locationId);
+			int from = 5 * page;
+			return elasticUtility.searchByTermAndValue("complex", "complex", HousingComplex.class, "locationId",
+					locationId, from);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	@CrossOrigin
+	@RequestMapping("/latlng")
+	public List<LatLng> getLatLngs() {
+		Iterable<Location> locations = locationRepository.findAll();
+		List<LatLng> latLngs = new ArrayList<>();
+		for (Location location : locations) {
+			latLngs.add(location.getLatLng());
+		}
+		return latLngs;
 	}
 }

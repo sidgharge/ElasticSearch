@@ -103,7 +103,7 @@ public class ElasticWithoutDataApplicationTests {
 		fields.put("houseInfo", 1.0f);
 		fields.put("nickName", 1.0f);
 		fields.put("altMob", 2.5f);
-		List<Resident> residents = elasticUtility.searchByIdAndText("resident", "resident", Resident.class, restrictions, "sa", fields);
+		List<Resident> residents = elasticUtility.searchOnFieldsWithRestrictions("resident", "resident", Resident.class, restrictions, "sa", fields);
 		
 		Assert.assertEquals(2, residents.size());
 		
@@ -114,7 +114,7 @@ public class ElasticWithoutDataApplicationTests {
 	
 	@Test
 	public void searchByText() throws IOException {
-		List<Resident> residents = elasticUtility.searchByText("resident", "resident", Resident.class, "sa");
+		List<Resident> residents = elasticUtility.searchOnFields("resident", "resident", Resident.class, "sa");
 		System.out.println(residents);
 	}
 

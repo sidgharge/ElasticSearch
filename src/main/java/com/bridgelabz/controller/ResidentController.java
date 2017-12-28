@@ -126,7 +126,7 @@ public class ResidentController {
 		fields.put("name", 1.0f);
 
 		try {
-			List<ServiceProvider> residents = elasticUtility.searchByIdAndText("provider", "provider", ServiceProvider.class,
+			List<ServiceProvider> residents = elasticUtility.searchOnFieldsWithRestrictions("provider", "provider", ServiceProvider.class,
 					restrictions, text, fields);
 			return residents;
 		} catch (IOException e) {

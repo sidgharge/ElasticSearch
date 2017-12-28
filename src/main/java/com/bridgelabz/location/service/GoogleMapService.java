@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.bridgelabz.location.model.LatLng;
 import com.bridgelabz.location.model.LocationDetails;
+import com.bridgelabz.location.util.RestCallUtililty;
 import com.bridgelabz.location.util.Utility;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,9 @@ public class GoogleMapService {
 
 	@Autowired
 	Utility utility;
+	
+	@Autowired
+	RestCallUtililty restCallUtil;
 
 	/**
 	 * @param source
@@ -157,7 +161,7 @@ public class GoogleMapService {
 
 		ResteasyClient restCall = new ResteasyClientBuilder().build();
 
-		for (int radius = 500; radius <= 4000; radius += 1000) {
+		for (int radius = 100; radius <= 3100; radius += 500) {
 
 			String mapApiUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + "location=" + location
 					+ "&radius=" + radius + "&types=sublocality_level_1&key=" + key;
@@ -368,7 +372,54 @@ public class GoogleMapService {
 		}
 	return placeInfo;
 
+	}
+	
+	public Map<String, String> getSublocalityDetails(float lat, float lng) {
+
+		Map<String, String> placeInfo = new HashMap<>();
+
+		String location = lat + "," + lng;
 		
+		String geoCodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?&types=postal_code&latlng="
+				+ location + "+&rankBy=keyword&key=" + key;
+
+		JsonNode responseJson = null;
+
+		try {
+			responseJson = restCallUtil.getResponse(geoCodeUrl);
+
+			JsonNode results = responseJson.get("results");
+		
+			for (int k = 0; k < results.size(); k++) {
+				JsonNode record = results.get(k).get("address_components");
+				for (int j = 0; j < record.size(); j++) {
+
+					for (int index = 0; index < record.get(j).get("types").size(); index++) {
+						String type = record.get(j).get("types").get(index).asText();
+						if (type.equals("postal_code")) {
+							placeInfo.put("zipcode", record.get(j).get("long_name").asText());
+
+						} else if (type.equals("sublocality_level_1")) {
+							placeInfo.put("sublocality_level_1", record.get(j).get("long_name").asText());
+
+						} else if (type.equals("locality")) {
+							placeInfo.put("locality", record.get(j).get("long_name").asText());
+
+						} else if (type.equals("country")) {
+							placeInfo.put("country", record.get(j).get("long_name").asText());
+						}else if(type.equals("sublocality_level_2")) {
+							placeInfo.put("Level2", record.get(j).get("long_name").asText());
+						}
+					}
+				}
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return placeInfo;
 
 	}
 
