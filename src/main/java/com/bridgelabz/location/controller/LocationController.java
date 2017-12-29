@@ -119,11 +119,11 @@ public class LocationController {
 		int counter = 0;
 		int addedlocations = 0;
 		for (Location location : locations) {
-			if (counter < 70) {
+			if (counter < 50) {
 				counter++;
 				continue;
 			}
-			if (counter >= 80) {
+			if (counter >= 70) {
 				break;
 			}
 

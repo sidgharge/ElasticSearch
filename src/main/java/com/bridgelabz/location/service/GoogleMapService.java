@@ -161,16 +161,18 @@ public class GoogleMapService {
 
 		ResteasyClient restCall = new ResteasyClientBuilder().build();
 
-		for (int radius = 100; radius <= 3100; radius += 500) {
+		for (int radius = 350; radius <= 3350; radius += 1000) {
 
 			String mapApiUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + "location=" + location
-					+ "&radius=" + radius + "&types=sublocality_level_1&key=" + key;
+					+ "&radius=" + radius + "&types=sublocality_level_2&key=" + key;
 
 			ResteasyWebTarget target = restCall.target(mapApiUrl);
 
 			Response response = target.request().accept(MediaType.APPLICATION_JSON).get();
 
 			String responseString = response.readEntity(String.class);
+			
+			//System.out.println(responseString);
 
 			JsonNode responseJson = null;
 
