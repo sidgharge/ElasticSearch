@@ -252,7 +252,7 @@ public class ElasticUtility {
 		QueryBuilder query = QueryBuilders.matchQuery(field, text);
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(query);
-		sourceBuilder.size(5);
+		sourceBuilder.size(50);
 		sourceBuilder.from(from);
 		SearchRequest request = new SearchRequest(index);
 		request.types(type);

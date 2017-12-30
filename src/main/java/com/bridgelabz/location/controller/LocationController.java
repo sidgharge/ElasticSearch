@@ -113,17 +113,22 @@ public class LocationController {
 	 * }
 	 */
 
+	/**
+	 * Iterates over the current locations and adds new nearby locations
+	 * @return number of new locations added to db and index
+	 * @throws IOException
+	 */
 	@GetMapping("/addPlaces")
 	public String addPlaces() throws IOException {
 		Iterable<Location> locations = locationRepository.findAll();
 		int counter = 0;
 		int addedlocations = 0;
 		for (Location location : locations) {
-			if (counter < 50) {
+			if (counter < 70) {
 				counter++;
 				continue;
 			}
-			if (counter >= 70) {
+			if (counter >= 101) {
 				break;
 			}
 
@@ -148,14 +153,25 @@ public class LocationController {
 		return "Got new location count: " + addedlocations;
 	}
 
+	/**
+	 * Iterate over the locations and adds nearby housing complexes to the location
+	 */
 	@GetMapping("/housingcomplex")
 	public void addHousingComplexes() {
 		Iterable<Location> locations = locationRepository.findAll();
-
+		int counter = 0;
+		int added = 0;
 		for (Location location : locations) {
+			counter++;
 			try {
 				List<LocationDetails> complexes = service.getHousingComplexes(location.getLatLng());
 				for (LocationDetails locationDetails : complexes) {
+					//List<HousingComplex> results = elasticUtility.searchByTermAndValue("complex", "complex", HousingComplex.class, "latLng", locationDetails.getLocation(), 0);
+					List<HousingComplex> results = elasticUtility.getNearByLocations("complex", "complex", HousingComplex.class, locationDetails.getLocation().getLat(), locationDetails.getLocation().getLon(), "5");
+					if (results.size() > 0) {
+						continue;
+					}
+					added++;
 					HousingComplex complex = new HousingComplex();
 					complex.setLocationId(location.getLocationId());
 					complex.setComplexName(locationDetails.getName());
@@ -166,9 +182,13 @@ public class LocationController {
 			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
 			}
+			System.out.println("Done: " + counter);
 		}
 	}
 
+	/**
+	 * updates area, zip and location of the locations
+	 */
 	@GetMapping("/update")
 	public void updateLocations() {
 		Iterable<Location> locations = locationRepository.findAll();
@@ -186,7 +206,7 @@ public class LocationController {
 				 * location.getLatLng().getLon());
 				 */
 				
-				if (counter < 86 && counter > 47) {
+				if (counter < 154 && counter > 59) {
 					Map<String, String> locationInfo = service.getSublocalityDetails(location.getLatLng().getLat(),
 							location.getLatLng().getLon());
 					boolean isChanged = false;
@@ -232,10 +252,16 @@ public class LocationController {
 		System.out.println("Hello");
 	}
 
+	/**
+	 * Returns housing complexes near the given location
+	 * @param locationId id of the location
+	 * @param page page number
+	 * @return list of housing complexes near the location id
+	 */
 	@GetMapping("/complex/{locationId}/{page}")
 	public List<HousingComplex> getHousingComplexes(@PathVariable String locationId, @PathVariable int page) {
 		try {
-			int from = 5 * page;
+			int from = 50 * page;
 			return elasticUtility.searchByTermAndValue("complex", "complex", HousingComplex.class, "locationId",
 					locationId, from);
 		} catch (IOException e) {
@@ -244,6 +270,10 @@ public class LocationController {
 		return null;
 	}
 
+	/**
+	 * Helps in mapping all lat lngs in the db to google map
+	 * @return list of lat lngs in the location db
+	 */
 	@CrossOrigin
 	@RequestMapping("/latlng")
 	public List<LatLng> getLatLngs() {

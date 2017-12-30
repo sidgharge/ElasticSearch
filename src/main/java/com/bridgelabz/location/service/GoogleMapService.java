@@ -84,7 +84,7 @@ public class GoogleMapService {
 		String location = currentLocation.getLat() + "," + currentLocation.getLon();
 
 		String mapApiUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + location
-				+ "&radius=400&keyword=Apartment|CHS&strictbounds&key=" + key;
+				+ "&radius=1000&keyword=Apartment|CHS&strictbounds&key=" + key;
 
 		List<LocationDetails> housingComplexes = new ArrayList<>();
 
@@ -101,11 +101,12 @@ public class GoogleMapService {
 		JsonNode responseJson = null;
 		try {
 			responseJson = mapper.readTree(responseString);
-			JsonNode results = responseJson.get("results");
+			JsonNode results = null;
+			results=responseJson.get("results");
 			JsonNode nextPageResults = null;
-
+			
 			if (responseJson.get("next_page_token") != null) {
-
+				Thread.sleep(3000);
 				String nextPageToken = responseJson.get("next_page_token").asText();
 				String nextPageUrl = mapApiUrl + "&pagetoken=" + nextPageToken;
 				System.out.println(nextPageUrl);
@@ -114,32 +115,48 @@ public class GoogleMapService {
 				response = target.request().accept(MediaType.APPLICATION_JSON).get();
 
 				String newPageResponse = response.readEntity(String.class);
-				System.out.println(newPageResponse);
+				//System.out.println(newPageResponse);
 				JsonNode nextPageResponse = mapper.readTree(newPageResponse);
 				nextPageResults = nextPageResponse.get("results");
-				System.out.println(nextPageResults);
-			}
+				
+			
+/*				if (nextPageResponse.get("next_page_token") != null) {
+					nextPageToken=nextPageResponse.get("next_page_token").asText();
+					nextPageUrl = mapApiUrl + "&pagetoken=" + nextPageToken;
+					Thread.sleep(3000);
+					target = restCall.target(nextPageUrl);
+					response = target.request().accept(MediaType.APPLICATION_JSON).get();
 
-			for (int i = 0; i < results.size(); i++) {
-				LocationDetails complex = new LocationDetails();
-
-				float lat = (float) results.get(i).get("geometry").get("location").get("lat").asDouble();
-				float lng = (float) results.get(i).get("geometry").get("location").get("lng").asDouble();
-
-				LatLng latlng = new LatLng(lat, lng);
-				complex.setName(results.get(i).get("name").asText());
-				complex.setAddress(results.get(i).get("vicinity").asText());
-				complex.setLocation(latlng);
-				System.out.println(i);
-				housingComplexes.add(complex);
-
-				if ((results.size() - 1) == i && nextPageResults != null) {
-					i = 0;
-					results = nextPageResults;
-					nextPageResults = null;
+					newPageResponse = response.readEntity(String.class);
+					//System.out.println(newPageResponse);
+					nextPageResponse = mapper.readTree(newPageResponse);
+					results=nextPageResponse.get("results");
+					System.out.println("========>"+results.size());
 				}
+		*/
+			if(results!=null) {
+				for (int i = 0; i < results.size(); i++) {
+					LocationDetails complex = new LocationDetails();
+	
+					float lat = (float) results.get(i).get("geometry").get("location").get("lat").asDouble();
+					float lng = (float) results.get(i).get("geometry").get("location").get("lng").asDouble();
+	
+					LatLng latlng = new LatLng(lat, lng);
+					complex.setName(results.get(i).get("name").asText());
+					complex.setAddress(results.get(i).get("vicinity").asText());
+					complex.setLocation(latlng);
+					//System.out.println(i);
+					housingComplexes.add(complex);
+	
+					if ((results.size() - 1) == i && nextPageResults != null) {
+						i = 0;
+						results = nextPageResults;
+						nextPageResults = null;
+					}
+			   }
 			}
-		} catch (IOException e) {
+		} 
+		}catch (IOException e) {
 			e.printStackTrace();
 		}
 
