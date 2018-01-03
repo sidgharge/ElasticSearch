@@ -31,5 +31,5 @@ public class LocationDetails {
 	public void setLocation(LatLng location) {
 		this.location = location;
 	}
-
+	
 }

@@ -210,7 +210,7 @@ public class ElasticUtility {
 		System.out.println(response.getTook());
 	}
 
-	public <T> List<T> getNearByLocations(String index, String type, Class<T> classType, float lat, float lon,
+	public <T> List<T> getNearByLocations(String index, String type, Class<T> classType, double lat, double lon,
 			String distance) throws IOException {
 
 		GeoDistanceQueryBuilder builder = QueryBuilders.geoDistanceQuery("latLng");

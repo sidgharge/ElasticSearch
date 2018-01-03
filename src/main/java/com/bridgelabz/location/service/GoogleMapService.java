@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.bridgelabz.location.model.LatLng;
 import com.bridgelabz.location.model.LocationDetails;
+import com.bridgelabz.location.util.ResponseJsonUtil;
 import com.bridgelabz.location.util.RestCallUtililty;
 import com.bridgelabz.location.util.Utility;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -79,7 +80,7 @@ public class GoogleMapService {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public List<LocationDetails> getHousingComplexes(LatLng currentLocation) throws InterruptedException {
+/*	public List<LocationDetails> getHousingComplexes(LatLng currentLocation) throws InterruptedException {
 
 		String location = currentLocation.getLat() + "," + currentLocation.getLon();
 
@@ -120,7 +121,7 @@ public class GoogleMapService {
 				nextPageResults = nextPageResponse.get("results");
 				
 			
-/*				if (nextPageResponse.get("next_page_token") != null) {
+				if (nextPageResponse.get("next_page_token") != null) {
 					nextPageToken=nextPageResponse.get("next_page_token").asText();
 					nextPageUrl = mapApiUrl + "&pagetoken=" + nextPageToken;
 					Thread.sleep(3000);
@@ -133,13 +134,13 @@ public class GoogleMapService {
 					results=nextPageResponse.get("results");
 					System.out.println("========>"+results.size());
 				}
-		*/
+		
 			if(results!=null) {
 				for (int i = 0; i < results.size(); i++) {
 					LocationDetails complex = new LocationDetails();
 	
-					float lat = (float) results.get(i).get("geometry").get("location").get("lat").asDouble();
-					float lng = (float) results.get(i).get("geometry").get("location").get("lng").asDouble();
+					double lat = results.get(i).get("geometry").get("location").get("lat").asDouble();
+					double lng = results.get(i).get("geometry").get("location").get("lng").asDouble();
 	
 					LatLng latlng = new LatLng(lat, lng);
 					complex.setName(results.get(i).get("name").asText());
@@ -162,7 +163,55 @@ public class GoogleMapService {
 
 		restCall.close();
 		return housingComplexes;
+	}*/
+	
+	public List<LocationDetails> getHousingComplexes(LatLng currentLocation,int radius) {
+
+		String location = currentLocation.getLat() + "," + currentLocation.getLon();
+
+		String mapApiUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + location
+				+ "&radius="+radius+"&keyword=Apartment|Society|CHS|Complex&strictbounds&key=" + key;
+
+
+		List<LocationDetails> housingComplexes = new ArrayList<>();
+		
+		ResponseJsonUtil responseUtil=new ResponseJsonUtil();
+		int counter=0;
+		try {
+			
+			JsonNode responseJson = restCallUtil.getResponse(mapApiUrl);
+
+			JsonNode results = responseJson.get("results");
+			housingComplexes.addAll(responseUtil.getHousingComplex(results));
+			
+			JsonNode nextPageResults = null;
+			if(responseJson.get("next_page_token")!=null) {
+				String nextPageToken=responseJson.get("next_page_token").asText();
+				while(nextPageToken!=null) {
+					counter++;
+					 String nextPageUrl=mapApiUrl+"&pagetoken="+nextPageToken;
+					 Thread.sleep(4000);
+					 JsonNode nextPageResponse = restCallUtil.getResponse(nextPageUrl);
+					 nextPageResults=nextPageResponse.get("results");
+					 housingComplexes.addAll(responseUtil.getHousingComplex(nextPageResults));
+					 if(nextPageResponse.get("next_page_token")!=null) {
+						 nextPageResults=nextPageResponse.get("results");
+						 nextPageToken=nextPageResponse.get("next_page_token").asText();
+					 }else {
+						 nextPageToken=null;
+					 }
+				}
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println(housingComplexes.size()+" "+counter);
+		return housingComplexes;
 	}
+
 
 	/**
 	 * @param currentLocation
@@ -204,8 +253,8 @@ public class GoogleMapService {
 			for (int i = 0; i < results.size(); i++) {
 				int flag = 0;
 
-				float lat = (float) results.get(i).get("geometry").get("location").get("lat").asDouble();
-				float lng = (float) results.get(i).get("geometry").get("location").get("lng").asDouble();
+				double lat = results.get(i).get("geometry").get("location").get("lat").asDouble();
+				double lng = results.get(i).get("geometry").get("location").get("lng").asDouble();
 
 				LatLng latlng = new LatLng(lat, lng);
 				LocationDetails place = new LocationDetails();
@@ -320,7 +369,7 @@ public class GoogleMapService {
 
 	}
 
-	public Map<String, String> getPlaceInfoFromLatLng(float lat, float lng) throws JsonProcessingException, IOException {
+	public Map<String, String> getPlaceInfoFromLatLng(double lat, double lng) throws JsonProcessingException, IOException {
 
 		ObjectMapper mapper = new ObjectMapper();
 		
@@ -393,7 +442,7 @@ public class GoogleMapService {
 
 	}
 	
-	public Map<String, String> getSublocalityDetails(float lat, float lng) {
+	public Map<String, String> getSublocalityDetails(double lat, double lng) {
 
 		Map<String, String> placeInfo = new HashMap<>();
 

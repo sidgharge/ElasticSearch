@@ -56,5 +56,14 @@ public class HousingComplex {
 	public void setLatLng(LatLng latLng) {
 		this.latLng = latLng;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		HousingComplex complex = (HousingComplex) obj;
+		if (complex.getComplexId() == this.getComplexId()) {
+			return true;
+		}
+		return false;
+	}
 
 }

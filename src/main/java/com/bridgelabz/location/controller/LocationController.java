@@ -80,7 +80,7 @@ public class LocationController {
 	 * @return
 	 */
 	@GetMapping("/nearby/{lat}/{lon}/{distance}")
-	public List<Location> getNearBy(@PathVariable float lat, @PathVariable float lon, @PathVariable String distance) {
+	public List<Location> getNearBy(@PathVariable double lat, @PathVariable double lon, @PathVariable String distance) {
 		try {
 			List<Location> locations = elasticUtility.getNearByLocations("loc", "loc", Location.class, lat, lon,
 					distance);
@@ -115,6 +115,7 @@ public class LocationController {
 
 	/**
 	 * Iterates over the current locations and adds new nearby locations
+	 * 
 	 * @return number of new locations added to db and index
 	 * @throws IOException
 	 */
@@ -124,21 +125,20 @@ public class LocationController {
 		int counter = 0;
 		int addedlocations = 0;
 		for (Location location : locations) {
-			if (counter < 70) {
+			if (counter < 48) {
 				counter++;
 				continue;
 			}
-			if (counter >= 101) {
-				break;
-			}
+			/*
+			 * if (counter >= 10) { break; }
+			 */
 
 			counter++;
 			List<LocationDetails> details = service.getNearByPlaces(location.getLatLng());
 			System.out.println("Got details from map...");
 			for (LocationDetails locationDetails : details) {
 				List<Location> nearByLocations = elasticUtility.getNearByLocations("loc", "loc", Location.class,
-						(float) locationDetails.getLocation().getLat(), (float) locationDetails.getLocation().getLon(),
-						"1000");
+						locationDetails.getLocation().getLat(), locationDetails.getLocation().getLon(), "1000");
 				System.out.println("Nearby location count: " + nearByLocations.size());
 				if (nearByLocations == null || nearByLocations.isEmpty()) {
 					Location newLocation = new Location();
@@ -162,9 +162,56 @@ public class LocationController {
 		int counter = 0;
 		int added = 0;
 		for (Location location : locations) {
+			if (counter < 50) {
+				counter++;
+				continue;
+			}
+			if (counter > 121) {
+				break;
+			}
 			counter++;
 			try {
-				List<LocationDetails> complexes = service.getHousingComplexes(location.getLatLng());
+				List<LocationDetails> complexes = service.getHousingComplexes(location.getLatLng(), 1000);
+				for (LocationDetails locationDetails : complexes) {
+					// List<HousingComplex> results = elasticUtility.searchByTermAndValue("complex",
+					// "complex", HousingComplex.class, "latLng", locationDetails.getLocation(), 0);
+					List<HousingComplex> results = elasticUtility.getNearByLocations("complex", "complex",
+							HousingComplex.class, locationDetails.getLocation().getLat(),
+							locationDetails.getLocation().getLon(), "5");
+					if (results.size() > 0) {
+						continue;
+					}
+					added++;
+					HousingComplex complex = new HousingComplex();
+					complex.setLocationId(location.getLocationId());
+					complex.setComplexName(locationDetails.getName());
+					complex.setLatLng(locationDetails.getLocation());
+					complex = complexRepository.save(complex);
+					elasticUtility.save(complex, "complex", "complex", String.valueOf(complex.getComplexId()));
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			System.out.println("Done: " + counter + ", Added: " + added);
+		}
+	}
+
+	@GetMapping("/circularhousingcomplex")
+	public void circularSearchComplexes(LatLng initialLatLng) {
+		Iterable<Location> locations = locationRepository.findAll();
+		int counter = 0;
+		int added = 0;
+		for (Location location : locations) {
+			if (counter < 11) {
+				counter++;
+				continue;
+			}
+			if (counter > 121) {
+				break;
+			}
+			counter++;
+			try {
+				List<LocationDetails> complexes = service.getHousingComplexes(location.getLatLng(), 500);
 				for (LocationDetails locationDetails : complexes) {
 					//List<HousingComplex> results = elasticUtility.searchByTermAndValue("complex", "complex", HousingComplex.class, "latLng", locationDetails.getLocation(), 0);
 					List<HousingComplex> results = elasticUtility.getNearByLocations("complex", "complex", HousingComplex.class, locationDetails.getLocation().getLat(), locationDetails.getLocation().getLon(), "5");
@@ -179,10 +226,33 @@ public class LocationController {
 					complex = complexRepository.save(complex);
 					elasticUtility.save(complex, "complex", "complex", String.valueOf(complex.getComplexId()));
 				}
-			} catch (InterruptedException | IOException e) {
+				Thread.sleep(1000);
+				List<HousingComplex> complex500 = elasticUtility.getNearByLocations("complex", "complex", HousingComplex.class, location.getLatLng().getLat(), location.getLatLng().getLon(), "500");
+				List<HousingComplex> complex400 = elasticUtility.getNearByLocations("complex", "complex", HousingComplex.class, location.getLatLng().getLat(), location.getLatLng().getLon(), "400");
+				complex500.removeAll(complex400);
+				
+				for (HousingComplex housingComplex : complex500) {
+					List<LocationDetails> complexes2 = service.getHousingComplexes(housingComplex.getLatLng(), 600);
+					for (LocationDetails locationDetails : complexes2) {
+						//List<HousingComplex> results = elasticUtility.searchByTermAndValue("complex", "complex", HousingComplex.class, "latLng", locationDetails.getLocation(), 0);
+						List<HousingComplex> results = elasticUtility.getNearByLocations("complex", "complex", HousingComplex.class, locationDetails.getLocation().getLat(), locationDetails.getLocation().getLon(), "5");
+						if (results.size() > 0) {
+							continue;
+						}
+						added++;
+						HousingComplex complex = new HousingComplex();
+						complex.setLocationId(location.getLocationId());
+						complex.setComplexName(locationDetails.getName());
+						complex.setLatLng(locationDetails.getLocation());
+						complex = complexRepository.save(complex);
+						elasticUtility.save(complex, "complex", "complex", String.valueOf(complex.getComplexId()));
+					}
+				}
+				
+			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
-			System.out.println("Done: " + counter);
+			System.out.println("Done: " + counter + ", Added: " + added);
 		}
 	}
 
@@ -205,14 +275,14 @@ public class LocationController {
 				 * service.getPlaceInfoFromLatLng(location.getLatLng().getLat(),
 				 * location.getLatLng().getLon());
 				 */
-				
-				if (counter < 154 && counter > 59) {
+
+				if (/* counter < 10 && counter > 0 */ true) {
 					Map<String, String> locationInfo = service.getSublocalityDetails(location.getLatLng().getLat(),
 							location.getLatLng().getLon());
 					boolean isChanged = false;
 					if (locationInfo.get("zipcode") != null
 							&& !locationInfo.get("zipcode").equals(String.valueOf(location.getZip()))) {
-						
+
 						location.setZip(Integer.parseInt(locationInfo.get("zipcode")));
 						isChanged = true;
 					}
@@ -254,8 +324,11 @@ public class LocationController {
 
 	/**
 	 * Returns housing complexes near the given location
-	 * @param locationId id of the location
-	 * @param page page number
+	 * 
+	 * @param locationId
+	 *            id of the location
+	 * @param page
+	 *            page number
 	 * @return list of housing complexes near the location id
 	 */
 	@GetMapping("/complex/{locationId}/{page}")
@@ -272,6 +345,7 @@ public class LocationController {
 
 	/**
 	 * Helps in mapping all lat lngs in the db to google map
+	 * 
 	 * @return list of lat lngs in the location db
 	 */
 	@CrossOrigin
@@ -284,4 +358,5 @@ public class LocationController {
 		}
 		return latLngs;
 	}
+
 }
