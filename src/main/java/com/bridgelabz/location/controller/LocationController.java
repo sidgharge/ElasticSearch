@@ -358,5 +358,54 @@ public class LocationController {
 		}
 		return latLngs;
 	}
+	
+	@GetMapping("/frequents")
+	public Map<String, Integer> findFrequentWords() {
+		Iterable<HousingComplex> complexes = complexRepository.findAll();
+		Map<String, Integer> frequentWords = new HashMap<>();
+		for (HousingComplex housingComplex : complexes) {
+			String name = housingComplex.getComplexName();
+			String[] keywords = name.split("\\s+");
+			for (String keyword : keywords) {
+				try {
+					Integer.parseInt(keyword);
+					continue;
+				} catch (Exception e) {
+					
+				}
+				int count = 0;
+				if (frequentWords.get(keyword) != null) {
+					count = frequentWords.get(keyword);
+				}
+				frequentWords.put(keyword, ++count);
+			}
+		}
+		Map<String, Integer> map = new HashMap<>();
+		for (String string : frequentWords.keySet()) {
+			if (frequentWords.get(string) > 9) {
+				map.put(string, frequentWords.get(string));
+			}
+		}
+		return map;
+	}
+	
+	@GetMapping("/remove/{keyword}")
+	public int removeWithKeyword(@PathVariable String keyword) throws IOException {
+		Iterable<HousingComplex> complexes = complexRepository.findAll();
+		int count = 0;
+		int pos = 0;
+		for (HousingComplex housingComplex : complexes) {
+			String name = housingComplex.getComplexName().toLowerCase().replaceAll("\\.", "").replaceAll("-", "");
+			if (name.contains(keyword)) {
+				complexRepository.delete(housingComplex);
+				elasticUtility.deleteById("complex", "complex", String.valueOf(housingComplex.getComplexId()));
+				count++;
+				System.out.println(name);
+			}
+			pos++;
+			System.out.println("Done: " + pos);
+		}
+		return count;
+	}
 
 }
