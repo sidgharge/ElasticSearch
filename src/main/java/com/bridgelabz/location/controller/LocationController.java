@@ -50,12 +50,12 @@ public class LocationController {
 	 */
 	@RequestMapping("/addall")
 	public void addFromDatabase() {
-		Map<String, Location> locationMap = new HashMap<>();
+		Map<String, HousingComplex> locationMap = new HashMap<>();
 
-		Iterable<Location> locations = locationRepository.findAll();
+		Iterable<HousingComplex> locations = complexRepository.findAll();
 		int count = 0;
-		for (Location location : locations) {
-			locationMap.put(String.valueOf(location.getLocationId()), location);
+		for (HousingComplex location : locations) {
+			locationMap.put(String.valueOf(location.getComplexId()), location);
 			count++;
 			if (count % 10 == 0) {
 				System.out.println("Done: " + count);
@@ -64,7 +64,7 @@ public class LocationController {
 
 		try {
 			System.out.println("Size: " + locationMap.size());
-			elasticUtility.bulkRequest("loc", "loc", Location.class, locationMap);
+			elasticUtility.bulkRequest("complex", "complex", HousingComplex.class, locationMap);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("ERRR.....");

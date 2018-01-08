@@ -12,8 +12,6 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -30,7 +28,7 @@ public class ElasticWithoutDataApplicationTests {
 
 	/*MockMvc mockMvc;
 	
-	WebApplicationContext context;*/
+	WebApplicationContext context;
 	
 	@InjectMocks
 	ElasticUtility elasticUtility;
@@ -39,10 +37,10 @@ public class ElasticWithoutDataApplicationTests {
 	@Spy
 	RestHighLevelClient client;
 	
-	/*@Before
+	@Before
 	public void setup() {
 		mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
-	}*/
+	}
 	
 	@Test
 	@Ignore
@@ -58,7 +56,7 @@ public class ElasticWithoutDataApplicationTests {
 	@Test
 	@Ignore
 	public void getById() throws JsonParseException, JsonMappingException, IOException {
-		/*Resident actualResident = elasticUtility.getById("resident", "resident", String.valueOf(1), Resident.class);
+		Resident actualResident = elasticUtility.getById("resident", "resident", String.valueOf(1), Resident.class);
 		
 		Resident expectedResident = new Resident();
 		expectedResident.setResidentId(1);
@@ -69,7 +67,7 @@ public class ElasticWithoutDataApplicationTests {
 		expectedResident.setHouseInfo("Satara");
 		expectedResident.setSpId(2);
 		
-		Assert.assertEquals(expectedResident, actualResident);*/
+		Assert.assertEquals(expectedResident, actualResident);
 	}
 	
 	@Test
@@ -117,5 +115,5 @@ public class ElasticWithoutDataApplicationTests {
 		List<Resident> residents = elasticUtility.searchOnFields("resident", "resident", Resident.class, "sa");
 		System.out.println(residents);
 	}
-
+*/
 }

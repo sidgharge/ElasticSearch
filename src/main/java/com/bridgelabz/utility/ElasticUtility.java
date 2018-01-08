@@ -28,6 +28,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.FuzzyQueryBuilder;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
@@ -75,7 +76,7 @@ public class ElasticUtility {
 			return object;
 		}
 		
-		throw new DocumentException("Document does not exist");
+		return null;
 	}
 
 	public Result deleteById(String index, String type, String id) throws IOException {
@@ -249,7 +250,7 @@ public class ElasticUtility {
 	}
 	
 	public <T> List<T> searchByTermAndValue(String index, String type, Class<T> classType, String field, Object text, int from) throws IOException {
-		QueryBuilder query = QueryBuilders.matchQuery(field, text);
+		QueryBuilder query = QueryBuilders.matchQuery(field, text).operator(Operator.AND);
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(query);
 		sourceBuilder.size(50);
