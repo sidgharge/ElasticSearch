@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.dom4j.DocumentException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteResponse.Result;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -63,6 +64,28 @@ public class ElasticUtility {
 
 		return indexResponse.getId();
 	}
+	
+	public <T> void saveAsync(T object, String index, String type, String id) throws IOException {
+
+		ObjectMapper mapper = new ObjectMapper();
+		String json = mapper.writeValueAsString(object);
+		
+		IndexRequest indexRequest = new IndexRequest(index, type, id);
+		indexRequest.source(json, XContentType.JSON);
+		client.indexAsync(indexRequest, new ActionListener<IndexResponse>() {
+			
+			@Override
+			public void onResponse(IndexResponse response) {
+				System.out.println("Index added at: " + response.getId());
+			}
+			
+			@Override
+			public void onFailure(Exception e) {
+				System.out.println("Failed to add the document: " + id);
+			}
+		});
+
+	}
 
 	public <T> T getById(String index, String type, String id, Class<T> className)
 			throws JsonParseException, JsonMappingException, IOException, DocumentException {
@@ -84,6 +107,24 @@ public class ElasticUtility {
 		DeleteResponse response = client.delete(deleteRequest);
 		return response.getResult();
 	}
+	
+	public void deleteByIdAsync(String index, String type, String id) throws IOException {
+		
+		DeleteRequest deleteRequest = new DeleteRequest(index, type, id);
+		
+		client.deleteAsync(deleteRequest, new ActionListener<DeleteResponse>() {
+
+			@Override
+			public void onResponse(DeleteResponse response) {
+				System.out.println("Document deleted : " + response.getId());
+			}
+
+			@Override
+			public void onFailure(Exception e) {
+				System.out.println("Failed to delete the document: " + id);
+			}
+		});
+	}
 
 	public Result update(String index, String type, String id, Map<String, Object> dataMap) throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
@@ -94,6 +135,27 @@ public class ElasticUtility {
 		UpdateResponse response = client.update(updateRequest);
 		return response.getResult();
 	}
+	
+	public void updateAsync(String index, String type, String id, Map<String, Object> dataMap) throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+
+		String json = mapper.writeValueAsString(dataMap);
+		UpdateRequest updateRequest = new UpdateRequest(index, type, id);
+		updateRequest.doc(json, XContentType.JSON);
+		client.updateAsync(updateRequest, new ActionListener<UpdateResponse>() {
+
+			@Override
+			public void onResponse(UpdateResponse response) {
+				System.out.println("Document updated at: " + response.getId());
+			}
+
+			@Override
+			public void onFailure(Exception e) {
+				System.out.println("Failed to update the document: " + id);
+			}
+		});
+	}
+
 
 	public <T> List<T> searchOnFieldsWithRestrictions(String index, String type, Class<T> classType,
 			Map<String, Object> restrictions, String text, Map<String, Float> fields) throws IOException {

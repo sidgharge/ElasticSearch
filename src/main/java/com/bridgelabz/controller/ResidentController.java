@@ -68,7 +68,12 @@ public class ResidentController {
 	@PostMapping("/resident")
 	public void addResident(@RequestBody Resident resident) {
 
-		JmsObject<Resident> jmsObject = new JmsObject<>();
+		try {
+			elasticUtility.saveAsync(resident, "resident", "resident", String.valueOf(resident.getResidentId()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		/*JmsObject<Resident> jmsObject = new JmsObject<>();
 		jmsObject.setId(String.valueOf(resident.getResidentId())).setIndex("resident").setType("resident")
 				.setObject(resident);
 
@@ -79,7 +84,7 @@ public class ResidentController {
 				Message message = session.createObjectMessage(jmsObject);
 				return message;
 			}
-		});
+		});*/
 
 	}
 
