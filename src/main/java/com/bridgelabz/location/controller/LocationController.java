@@ -46,7 +46,7 @@ public class LocationController {
 	GoogleMapService service;
 
 	/**
-	 * Adds all the documents from database to elasticsearch index
+	 * Adds all the housing complexes from database to elasticsearch index
 	 */
 	@RequestMapping("/addall")
 	public void addFromDatabase() {
@@ -74,10 +74,10 @@ public class LocationController {
 	/**
 	 * Gets nearby places from given lat lng stored in elasticsearch index
 	 * 
-	 * @param lat
-	 * @param lon
-	 * @param distance
-	 * @return
+	 * @param lat latitude of the location
+	 * @param lon longitude of the location
+	 * @param distance in meters
+	 * @return list of nearby locations stored in elasticsearch index
 	 */
 	@GetMapping("/nearby/{lat}/{lon}/{distance}")
 	public List<Location> getNearBy(@PathVariable double lat, @PathVariable double lon, @PathVariable String distance) {
@@ -162,13 +162,13 @@ public class LocationController {
 		int counter = 0;
 		int added = 0;
 		for (Location location : locations) {
-			if (counter < 50) {
+			/*if (counter < 50) {
 				counter++;
 				continue;
 			}
 			if (counter > 121) {
 				break;
-			}
+			}*/
 			counter++;
 			try {
 				List<LocationDetails> complexes = service.getHousingComplexes(location.getLatLng(), 1000);
@@ -202,13 +202,13 @@ public class LocationController {
 		int counter = 0;
 		int added = 0;
 		for (Location location : locations) {
-			if (counter < 11) {
+			/*if (counter < 11) {
 				counter++;
 				continue;
 			}
 			if (counter > 121) {
 				break;
-			}
+			}*/
 			counter++;
 			try {
 				List<LocationDetails> complexes = service.getHousingComplexes(location.getLatLng(), 500);
@@ -334,7 +334,7 @@ public class LocationController {
 	@GetMapping("/complex/{locationId}/{page}")
 	public List<HousingComplex> getHousingComplexes(@PathVariable String locationId, @PathVariable int page) {
 		try {
-			int from = 50 * page;
+			int from = 20 * (page - 1);
 			return elasticUtility.searchByTermAndValue("complex", "complex", HousingComplex.class, "locationId",
 					locationId, from);
 		} catch (IOException e) {

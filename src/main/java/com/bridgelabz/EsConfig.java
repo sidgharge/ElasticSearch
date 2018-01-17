@@ -27,38 +27,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class EsConfig {
 
-	/*@Bean
-	public TransportClient transportClient() {
-		TransportClient client = null;
-		try {
-			Settings settings = Settings.builder().put("cluster.name", "elasticsearch").build();
-			client = new PreBuiltTransportClient(settings)
-					.addTransportAddress(new TransportAddress(InetAddress.getByName("localhost"), 9300));
-
-			IndicesExistsRequest existsRequest = new IndicesExistsRequest("resident");
-
-			//if (!client.admin().indices().exists(existsRequest).actionGet().isExists()) {
-			if(true) {
-				CreateIndexRequest createIndexRequest = new CreateIndexRequest("loc");
-				Map<String, String> map = new HashMap<>();
-				map.put("location", );
-				createIndexRequest.mapping("loc", map);
-
-				createIndexRequest.settings(
-						Settings.builder().put("index.number_of_shards", 2).put("index.number_of_replicas", 0));
-
-				CreateIndexResponse resp = client.admin().indices().create(createIndexRequest).actionGet();
-				System.out.println("Index created: " + resp.isAcknowledged());
-				client.close();
-			} else {
-				System.out.println("Index already exists");
-			}
-
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
-		return client;
-	}*/
 
 	@Bean
 	public RestHighLevelClient restClient() throws UnknownHostException {

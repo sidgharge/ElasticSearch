@@ -279,12 +279,17 @@ public class ElasticUtility {
 		GeoDistanceQueryBuilder builder = QueryBuilders.geoDistanceQuery("latLng");
 		builder.point(lat, lon);
 		builder.distance(distance, DistanceUnit.METERS);
+		
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(builder);
+		
 		SortBuilder<GeoDistanceSortBuilder> sort = SortBuilders.geoDistanceSort("latLng", lat, lon);
 		sourceBuilder.sort(sort);
+		
 		SearchRequest request = new SearchRequest(index).types(type).source(sourceBuilder);
+		
 		SearchResponse response = client.search(request);
+		
 		List<T> results = new ArrayList<>();
 		ObjectMapper mapper = new ObjectMapper();
 		for (SearchHit hit : response.getHits()) {
@@ -315,7 +320,7 @@ public class ElasticUtility {
 		QueryBuilder query = QueryBuilders.matchQuery(field, text).operator(Operator.AND);
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 		sourceBuilder.query(query);
-		sourceBuilder.size(50);
+		sourceBuilder.size(20);
 		sourceBuilder.from(from);
 		SearchRequest request = new SearchRequest(index);
 		request.types(type);
